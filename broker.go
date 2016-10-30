@@ -73,7 +73,9 @@ func (b *DeployerAccountBroker) Provision(
 ) (brokerapi.ProvisionedServiceSpec, error) {
 	b.logger.Info("provision", lager.Data{"instanceID": instanceID})
 
-	user, err := b.provisionUser(instanceID)
+	password := GenerateSecurePassword(32)
+
+	user, err := b.provisionUser(instanceID, password)
 	if err != nil {
 		return brokerapi.ProvisionedServiceSpec{}, err
 	}
@@ -91,18 +93,28 @@ func (b *DeployerAccountBroker) Provision(
 		return brokerapi.ProvisionedServiceSpec{}, err
 	}
 
+	link, err := CreateEphemeralLink(
+		b.config.FugaciousAddress,
+		fmt.Sprintf("%s | %s", instanceID, password),
+		b.config.FugaciousHours,
+		b.config.FugaciousMaxViews,
+	)
+	if err != nil {
+		return brokerapi.ProvisionedServiceSpec{}, err
+	}
+
 	return brokerapi.ProvisionedServiceSpec{
 		IsAsync:      false,
-		DashboardURL: "https://fugacio.us/",
+		DashboardURL: link,
 	}, nil
 }
 
-func (b *DeployerAccountBroker) provisionUser(userID string) (User, error) {
+func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {
 	b.logger.Info("create-uaa-user", lager.Data{"userID": userID})
 
 	user := User{
 		UserName: userID,
-		Password: GenerateSecurePassword(32),
+		Password: password,
 		Emails: []Email{{
 			Value:   b.config.EmailAddress,
 			Primary: true,

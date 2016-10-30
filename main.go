@@ -16,19 +16,22 @@ import (
 )
 
 type Config struct {
-	UAAAddress      string `envconfig:"uaa_address" required:"true"`
-	UAAClientID     string `envconfig:"uaa_client_id" required:"true"`
-	UAAClientSecret string `envconfig:"uaa_client_secret" required:"true"`
-	UAAZone         string `envconfig:"uaa_zone" default:"uaa"`
-	CFAddress       string `envconfig:"cf_address" required:"true"`
-	CFAuthAddress   string `envconfig:"cf_auth_address" required:"true"`
-	CFTokenAddress  string `envconfig:"cf_token_address" required:"true"`
-	CFUsername      string `envconfig:"cf_username" required:"true"`
-	CFPassword      string `envconfig:"cf_password" required:"true"`
-	BrokerUsername  string `envconfig:"broker_username" required:"true"`
-	BrokerPassword  string `envconfig:"broker_password" required:"true"`
-	EmailAddress    string `envconfig:"email_address" required:"true"`
-	Port            string `envconfig:"port" default:"3000"`
+	UAAAddress        string `envconfig:"uaa_address" required:"true"`
+	UAAClientID       string `envconfig:"uaa_client_id" required:"true"`
+	UAAClientSecret   string `envconfig:"uaa_client_secret" required:"true"`
+	UAAZone           string `envconfig:"uaa_zone" default:"uaa"`
+	CFAddress         string `envconfig:"cf_address" required:"true"`
+	CFAuthAddress     string `envconfig:"cf_auth_address" required:"true"`
+	CFTokenAddress    string `envconfig:"cf_token_address" required:"true"`
+	CFUsername        string `envconfig:"cf_username" required:"true"`
+	CFPassword        string `envconfig:"cf_password" required:"true"`
+	BrokerUsername    string `envconfig:"broker_username" required:"true"`
+	BrokerPassword    string `envconfig:"broker_password" required:"true"`
+	EmailAddress      string `envconfig:"email_address" required:"true"`
+	FugaciousAddress  string `envconfig:"fugacious_address" required:"true"`
+	FugaciousHours    int    `envconfig:"fugacious_hours" default:"2"`
+	FugaciousMaxViews int    `envconfig:"fugacious_max_views" default:"2"`
+	Port              string `envconfig:"port" default:"3000"`
 }
 
 func NewUAAClient(config Config) *http.Client {
