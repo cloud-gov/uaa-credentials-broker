@@ -1,0 +1,39 @@
+hash: 06d30e570e5322aecf0d0359efe6205db9440e04fa2ef9defeca82f99e49f532
+updated: 2016-10-29T16:06:23.07108643-04:00
+imports:
+- name: code.cloudfoundry.org/lager
+  version: b273f19621a28f627423f658e71e014f114dd53e
+- name: github.com/golang/protobuf
+  version: 98fa357170587e470c5f27d3c3ea0947b71eb455
+  subpackages:
+  - proto
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: cf79e51a62d8219d52060dfc1b4e810414ba2d15
+- name: github.com/kelseyhightower/envconfig
+  version: 9aca109c9aec4633fced9717c4a09ecab3d33111
+- name: github.com/pivotal-cf/brokerapi
+  version: 3dcb3e88faf1f81359679aa1b931df45d30f01de
+  subpackages:
+  - auth
+- name: golang.org/x/net
+  version: 3fe3024eef808ba2798cc1855690f49e2b860573
+  subpackages:
+  - context
+- name: golang.org/x/oauth2
+  version: 25b4fb1468cb89700c7c060cb99f30581a61f5e3
+  subpackages:
+  - clientcredentials
+  - internal
+- name: google.golang.org/appengine
+  version: 46239ca616842c00f41b8cbc6bbf2bd6ffbfcdad
+  subpackages:
+  - internal
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
+testImports: []

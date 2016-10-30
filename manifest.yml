@@ -1,0 +1,7 @@
+---
+applications:
+- name: deployer-account-broker
+  command: deployer-account-broker
+  buildpack: go_buildpack
+  env:
+    GOVERSION: go1.7

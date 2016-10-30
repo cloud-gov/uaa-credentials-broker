@@ -1,0 +1,9 @@
+package: github.com/cloudfoundry-community/deployer-account-broker
+import:
+- package: code.cloudfoundry.org/lager
+- package: github.com/kelseyhightower/envconfig
+  version: ~1.2.0
+- package: github.com/pivotal-cf/brokerapi
+- package: golang.org/x/oauth2
+  subpackages:
+  - clientcredentials
