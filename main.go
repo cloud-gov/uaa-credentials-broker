@@ -27,6 +27,7 @@ type Config struct {
 	CFPassword        string `envconfig:"cf_password" required:"true"`
 	BrokerUsername    string `envconfig:"broker_username" required:"true"`
 	BrokerPassword    string `envconfig:"broker_password" required:"true"`
+	PasswordLength    int    `envconfig:"password_length" default:"32"`
 	EmailAddress      string `envconfig:"email_address" required:"true"`
 	FugaciousAddress  string `envconfig:"fugacious_address" required:"true"`
 	FugaciousHours    int    `envconfig:"fugacious_hours" default:"2"`

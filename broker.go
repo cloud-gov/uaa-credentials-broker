@@ -73,7 +73,7 @@ func (b *DeployerAccountBroker) Provision(
 ) (brokerapi.ProvisionedServiceSpec, error) {
 	b.logger.Info("provision", lager.Data{"instanceID": instanceID})
 
-	password := GenerateSecurePassword(32)
+	password := GenerateSecurePassword(b.config.PasswordLength)
 
 	user, err := b.provisionUser(instanceID, password)
 	if err != nil {
