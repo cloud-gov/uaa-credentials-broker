@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 set -u
@@ -11,9 +11,6 @@ uaac token client get $UAA_CLIENT_ID -s $UAA_CLIENT_SECRET
 set -x
 
 space_guid=$(cf space "${CF_SPACE}" --guid)
-
-# Clean up existing service instance
-cf delete-service -f deployer-acceptance
 
 # Create service instance
 cf create-service deployer-account deployer-account deployer-acceptance
@@ -41,3 +38,9 @@ if uaac user get "${instance_guid}"; then
   echo "Unexpectedly found user ${instance_guid} in UAA"
   exit 1
 fi
+
+# Ensure service instance is deleted
+teardown() {
+  cf delete-service -f deployer-acceptance
+}
+trap teardown EXIT
