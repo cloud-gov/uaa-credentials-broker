@@ -55,11 +55,28 @@ jobs:
       username: {{slack-username}}
       icon_url: {{slack-icon-url}}
 
+- name: deployer-account-broker-acceptance-tests-staging
+  plan:
+  - get: broker-src
+    passed: [push-deployer-account-broker-staging]
+    trigger: true
+  - task: acceptance-tests-staging
+    file: broker-src/acceptance-tests.yml
+    params:
+      CF_API_URL: {{cf-api-url-staging}}
+      CF_USERNAME: {{cf-deploy-username-test-staging}}
+      CF_PASSWORD: {{cf-deploy-password-test-staging}}
+      CF_ORGANIZATION: {{cf-organization-test-staging}}
+      CF_SPACE: {{cf-space-test-staging}}
+      UAA_API_URL: {{uaa-address-staging}}
+      UAA_CLIENT_ID: {{uaa-client-id-test-staging}}
+      UAA_CLIENT_SECRET: {{uaa-client-secret-test-staging}}
+
 - name: push-deployer-account-broker-production
   plan:
   - aggregate:
     - get: broker-src
-      passed: [push-deployer-account-broker-staging]
+      passed: [deployer-account-broker-acceptance-tests-staging]
       trigger: true
     - get: pipeline-tasks
       passed: [push-deployer-account-broker-staging]
@@ -111,6 +128,23 @@ jobs:
       channel: {{slack-channel}}
       username: {{slack-username}}
       icon_url: {{slack-icon-url}}
+
+- name: deployer-account-broker-acceptance-tests-production
+  plan:
+  - get: broker-src
+    passed: [push-deployer-account-broker-production]
+    trigger: true
+  - task: acceptance-tests-production
+    file: broker-src/acceptance-tests.yml
+    params:
+      CF_API_URL: {{cf-api-url-production}}
+      CF_USERNAME: {{cf-deploy-username-test-production}}
+      CF_PASSWORD: {{cf-deploy-password-test-production}}
+      CF_ORGANIZATION: {{cf-organization-test-production}}
+      CF_SPACE: {{cf-space-test-production}}
+      UAA_API_URL: {{uaa-address-production}}
+      UAA_CLIENT_ID: {{uaa-client-id-test-production}}
+      UAA_CLIENT_SECRET: {{uaa-client-secret-test-production}}
 
 resources:
 - name: broker-src
