@@ -1,6 +1,8 @@
 ---
 jobs:
 - name: push-deployer-account-broker-staging
+  serial_groups: [staging]
+  serial: true
   plan:
   - aggregate:
     - get: broker-src
@@ -56,6 +58,8 @@ jobs:
       icon_url: {{slack-icon-url}}
 
 - name: deployer-account-broker-acceptance-tests-staging
+  serial_groups: [staging]
+  serial: true
   plan:
   - get: broker-src
     passed: [push-deployer-account-broker-staging]
@@ -73,6 +77,8 @@ jobs:
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-staging}}
 
 - name: push-deployer-account-broker-production
+  serial_groups: [production]
+  serial: true
   plan:
   - aggregate:
     - get: broker-src
@@ -130,6 +136,8 @@ jobs:
       icon_url: {{slack-icon-url}}
 
 - name: deployer-account-broker-acceptance-tests-production
+  serial_groups: [production]
+  serial: true
   plan:
   - get: broker-src
     passed: [push-deployer-account-broker-production]
