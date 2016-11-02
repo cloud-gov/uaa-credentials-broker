@@ -33,10 +33,11 @@ type Email struct {
 }
 
 type DeployerAccountBroker struct {
-	uaaClient *http.Client
-	cfClient  *http.Client
-	logger    lager.Logger
-	config    Config
+	uaaClient        *http.Client
+	cfClient         *http.Client
+	credentialSender CredentialSender
+	logger           lager.Logger
+	config           Config
 }
 
 func encodeBody(obj interface{}) (io.Reader, error) {
@@ -93,12 +94,7 @@ func (b *DeployerAccountBroker) Provision(
 		return brokerapi.ProvisionedServiceSpec{}, err
 	}
 
-	link, err := CreateEphemeralLink(
-		b.config.FugaciousAddress,
-		fmt.Sprintf("%s | %s", instanceID, password),
-		b.config.FugaciousHours,
-		b.config.FugaciousMaxViews,
-	)
+	link, err := b.credentialSender.Send(fmt.Sprintf("%s | %s", instanceID, password))
 	if err != nil {
 		return brokerapi.ProvisionedServiceSpec{}, err
 	}

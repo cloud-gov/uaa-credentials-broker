@@ -1,11 +1,19 @@
 ---
 jobs:
+- name: test-deployer-account-broker
+  plan:
+  - get: broker-src
+    trigger: true
+  - task: run-tests
+    file: broker-src/run-tests.yml
+
 - name: push-deployer-account-broker-staging
   serial_groups: [staging]
   serial: true
   plan:
   - aggregate:
     - get: broker-src
+      passed: [test-deployer-account-broker]
       trigger: true
     - get: pipeline-tasks
   - put: broker-deploy-staging

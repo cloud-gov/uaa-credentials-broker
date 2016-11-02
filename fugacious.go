@@ -1,24 +1,31 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-func CreateEphemeralLink(endpoint, body string, hours, maxViews int) (string, error) {
+type CredentialSender interface {
+	Send(message string) (string, error)
+}
+
+type FugaciousCredentialSender struct {
+	endpoint string
+	hours    int
+	maxViews int
+}
+
+func (f FugaciousCredentialSender) Send(message string) (string, error) {
 	data := map[string]interface{}{
 		"message": map[string]interface{}{
-			"body":      body,
-			"hours":     hours,
-			"max_views": maxViews,
+			"body":      message,
+			"hours":     f.hours,
+			"max_views": f.maxViews,
 		},
 	}
-	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(data)
 
-	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/m", endpoint), b)
+	body, _ := encodeBody(data)
+	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/m", f.endpoint), body)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
 
@@ -32,8 +39,8 @@ func CreateEphemeralLink(endpoint, body string, hours, maxViews int) (string, er
 	if err != nil {
 		return "", err
 	}
-	if resp.StatusCode != 302 {
-		return "", fmt.Errorf("Expected status 302; got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusFound {
+		return "", fmt.Errorf("Expected status %d; got %d", http.StatusFound, resp.StatusCode)
 	}
 	return resp.Header.Get("Location"), nil
 }

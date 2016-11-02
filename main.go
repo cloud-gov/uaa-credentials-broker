@@ -75,7 +75,12 @@ func main() {
 		logger:    logger,
 		uaaClient: NewUAAClient(config),
 		cfClient:  NewCFClient(config),
-		config:    config,
+		credentialSender: FugaciousCredentialSender{
+			endpoint: config.FugaciousAddress,
+			hours:    config.FugaciousHours,
+			maxViews: config.FugaciousMaxViews,
+		},
+		config: config,
 	}
 	credentials := brokerapi.BrokerCredentials{
 		Username: config.BrokerUsername,
