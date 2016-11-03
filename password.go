@@ -12,6 +12,8 @@ const (
 	chars   = upper + lower + number + special
 )
 
+type PasswordGenerator func(int) string
+
 func GenerateSecurePassword(n int) string {
 	for {
 		p, err := generatePassword(n)

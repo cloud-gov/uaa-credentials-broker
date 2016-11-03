@@ -72,15 +72,25 @@ func main() {
 	}
 
 	broker := DeployerAccountBroker{
-		logger:    logger,
-		uaaClient: NewUAAClient(config),
-		cfClient:  NewCFClient(config),
+		logger: logger,
+		uaaClient: &UAAClient{
+			logger:   logger,
+			endpoint: config.UAAAddress,
+			zone:     config.UAAZone,
+			client:   NewUAAClient(config),
+		},
+		cfClient: &CFClient{
+			logger:   logger,
+			endpoint: config.CFAddress,
+			client:   NewCFClient(config),
+		},
 		credentialSender: FugaciousCredentialSender{
 			endpoint: config.FugaciousAddress,
 			hours:    config.FugaciousHours,
 			maxViews: config.FugaciousMaxViews,
 		},
-		config: config,
+		generatePassword: GenerateSecurePassword,
+		config:           config,
 	}
 	credentials := brokerapi.BrokerCredentials{
 		Username: config.BrokerUsername,
