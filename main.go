@@ -89,7 +89,8 @@ func main() {
 			hours:    config.FugaciousHours,
 			maxViews: config.FugaciousMaxViews,
 		},
-		config: config,
+		generatePassword: GenerateSecurePassword,
+		config:           config,
 	}
 	credentials := brokerapi.BrokerCredentials{
 		Username: config.BrokerUsername,

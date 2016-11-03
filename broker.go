@@ -13,6 +13,7 @@ type DeployerAccountBroker struct {
 	uaaClient        AuthClient
 	cfClient         PAASClient
 	credentialSender CredentialSender
+	generatePassword PasswordGenerator
 	logger           lager.Logger
 	config           Config
 }
@@ -38,7 +39,7 @@ func (b *DeployerAccountBroker) Provision(
 ) (brokerapi.ProvisionedServiceSpec, error) {
 	b.logger.Info("provision", lager.Data{"instanceID": instanceID})
 
-	password := GenerateSecurePassword(b.config.PasswordLength)
+	password := b.generatePassword(b.config.PasswordLength)
 
 	user, err := b.provisionUser(instanceID, password)
 	if err != nil {
