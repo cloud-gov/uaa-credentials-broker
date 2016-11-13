@@ -39,15 +39,8 @@ This service broker allows Cloud Foundry users to provision and deprovision depl
     $ uaac client add deployer-account-broker \
         --name deployer-account-broker \
         --authorized_grant_types client_credentials \
-        --authorities scim.write,uaa.admin \
+        --authorities scim.write,uaa.admin,cloud_controller.admin \
         --scope uaa.none
-    ```
-
-* Create CF user:
-
-    ```bash
-    $ uaac user add deployer-account-broker
-    $ uaac member add cloud_controller.admin deployer-account-broker
     ```
 
 * Update Concourse pipeline:

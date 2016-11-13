@@ -26,10 +26,6 @@ jobs:
         UAA_CLIENT_SECRET: {{uaa-client-secret-staging}}
         UAA_ZONE: {{uaa-zone-staging}}
         CF_ADDRESS: {{cf-api-url-staging}}
-        CF_AUTH_ADDRESS: {{cf-auth-address-staging}}
-        CF_TOKEN_ADDRESS: {{cf-token-address-staging}}
-        CF_USERNAME: {{cf-username-staging}}
-        CF_PASSWORD: {{cf-password-staging}}
         BROKER_USERNAME: {{broker-username-staging}}
         BROKER_PASSWORD: {{broker-password-staging}}
         EMAIL_ADDRESS: {{email-address-staging}}
@@ -104,10 +100,6 @@ jobs:
         UAA_CLIENT_SECRET: {{uaa-client-secret-production}}
         UAA_ZONE: {{uaa-zone-production}}
         CF_ADDRESS: {{cf-api-url-production}}
-        CF_AUTH_ADDRESS: {{cf-auth-address-production}}
-        CF_TOKEN_ADDRESS: {{cf-token-address-production}}
-        CF_USERNAME: {{cf-username-production}}
-        CF_PASSWORD: {{cf-password-production}}
         BROKER_USERNAME: {{broker-username-production}}
         BROKER_PASSWORD: {{broker-password-production}}
         EMAIL_ADDRESS: {{email-address-production}}
