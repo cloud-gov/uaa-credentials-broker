@@ -21,10 +21,6 @@ type Config struct {
 	UAAClientSecret   string `envconfig:"uaa_client_secret" required:"true"`
 	UAAZone           string `envconfig:"uaa_zone" default:"uaa"`
 	CFAddress         string `envconfig:"cf_address" required:"true"`
-	CFAuthAddress     string `envconfig:"cf_auth_address" required:"true"`
-	CFTokenAddress    string `envconfig:"cf_token_address" required:"true"`
-	CFUsername        string `envconfig:"cf_username" required:"true"`
-	CFPassword        string `envconfig:"cf_password" required:"true"`
 	BrokerUsername    string `envconfig:"broker_username" required:"true"`
 	BrokerPassword    string `envconfig:"broker_password" required:"true"`
 	PasswordLength    int    `envconfig:"password_length" default:"32"`
@@ -35,7 +31,7 @@ type Config struct {
 	Port              string `envconfig:"port" default:"3000"`
 }
 
-func NewUAAClient(config Config) *http.Client {
+func NewClient(config Config) *http.Client {
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
 	cfg := &clientcredentials.Config{
 		ClientID:     config.UAAClientID,
@@ -43,22 +39,6 @@ func NewUAAClient(config Config) *http.Client {
 		TokenURL:     fmt.Sprintf("%s/oauth/token", config.UAAAddress),
 	}
 	return cfg.Client(ctx)
-}
-
-func NewCFClient(config Config) *http.Client {
-	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
-	cfg := &oauth2.Config{
-		ClientID: "cf",
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  config.CFAuthAddress + "/oauth/auth",
-			TokenURL: config.CFTokenAddress + "/oauth/token",
-		},
-	}
-	token, err := cfg.PasswordCredentialsToken(ctx, config.CFUsername, config.CFPassword)
-	fmt.Println(token, err)
-
-	source := cfg.TokenSource(ctx, token)
-	return oauth2.NewClient(ctx, source)
 }
 
 func main() {
@@ -71,18 +51,20 @@ func main() {
 		log.Fatalf("", err)
 	}
 
+	client := NewClient(config)
+
 	broker := DeployerAccountBroker{
 		logger: logger,
 		uaaClient: &UAAClient{
 			logger:   logger,
 			endpoint: config.UAAAddress,
 			zone:     config.UAAZone,
-			client:   NewUAAClient(config),
+			client:   client,
 		},
 		cfClient: &CFClient{
 			logger:   logger,
 			endpoint: config.CFAddress,
-			client:   NewCFClient(config),
+			client:   client,
 		},
 		credentialSender: FugaciousCredentialSender{
 			endpoint: config.FugaciousAddress,
