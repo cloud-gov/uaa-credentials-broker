@@ -29,7 +29,7 @@ var _ = Describe("Fugacious", func() {
 
 	Context("when the status code is expected", func() {
 		BeforeEach(func() {
-			header = http.StatusFound
+			header = http.StatusCreated
 		})
 
 		It("retrieves a link from the fugacious server", func() {
