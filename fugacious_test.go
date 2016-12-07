@@ -17,7 +17,7 @@ var _ = Describe("Fugacious", func() {
 
 	BeforeEach(func() {
 		server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Location", "https://fugacio.us/m/42")
+			w.Header().Set("Location", "https://fugacious.18f.gov/m/42")
 			w.WriteHeader(header)
 		}))
 		sender = FugaciousCredentialSender{
@@ -35,7 +35,7 @@ var _ = Describe("Fugacious", func() {
 		It("retrieves a link from the fugacious server", func() {
 			url, err := sender.Send("testing")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(url).To(Equal("https://fugacio.us/m/42"))
+			Expect(url).To(Equal("https://fugacious.18f.gov/m/42"))
 		})
 	})
 

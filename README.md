@@ -20,7 +20,7 @@ This service broker allows Cloud Foundry users to provision and deprovision depl
     Service instance: my-deployer-account
     Service: deployer-account
     ...
-    Dashboard: https://fugacio.us/m/k3MtzJWVZaNlnjBYJ7FUdpW2ZkDvhmQz
+    Dashboard: https://fugacious.18f.gov/m/k3MtzJWVZaNlnjBYJ7FUdpW2ZkDvhmQz
     ```
 
 * Retrieve credentials from dashboard link.
