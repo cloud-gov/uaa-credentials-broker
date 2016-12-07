@@ -76,7 +76,7 @@ var _ = Describe("broker", func() {
 	BeforeEach(func() {
 		uaaClient = FakeUAAClient{userGUID: "user-guid"}
 		cfClient = FakeCFClient{}
-		credentialSender = FakeCredentialSender{link: "https://fugacio.us/m/42"}
+		credentialSender = FakeCredentialSender{link: "https://fugacious.18f.gov/m/42"}
 		broker = DeployerAccountBroker{
 			uaaClient:        &uaaClient,
 			cfClient:         &cfClient,
@@ -118,7 +118,7 @@ var _ = Describe("broker", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(spec.IsAsync).To(Equal(false))
-			Expect(spec.DashboardURL).To(Equal("https://fugacio.us/m/42"))
+			Expect(spec.DashboardURL).To(Equal("https://fugacious.18f.gov/m/42"))
 
 			credentialSender.AssertExpectations(GinkgoT())
 			uaaClient.AssertExpectations(GinkgoT())
