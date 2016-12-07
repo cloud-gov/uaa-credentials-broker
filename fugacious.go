@@ -39,8 +39,8 @@ func (f FugaciousCredentialSender) Send(message string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if resp.StatusCode != http.StatusFound {
-		return "", fmt.Errorf("Expected status %d; got %d", http.StatusFound, resp.StatusCode)
+	if resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("Expected status %d; got %d", http.StatusCreated, resp.StatusCode)
 	}
 	return resp.Header.Get("Location"), nil
 }
