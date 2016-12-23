@@ -94,7 +94,7 @@ var _ = Describe("broker", func() {
 
 	Describe("provision", func() {
 		It("returns a provision service spec", func() {
-			credentialSender.On("Send", "instance-guid | password")
+			credentialSender.On("Send", "Username: instance-guid\nPassword: password")
 			uaaClient.On("CreateUser", User{
 				UserName: "instance-guid",
 				Password: "password",

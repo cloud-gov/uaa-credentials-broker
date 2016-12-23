@@ -59,7 +59,7 @@ func (b *DeployerAccountBroker) Provision(
 		return brokerapi.ProvisionedServiceSpec{}, err
 	}
 
-	link, err := b.credentialSender.Send(fmt.Sprintf("%s | %s", instanceID, password))
+	link, err := b.credentialSender.Send(fmt.Sprintf("Username: %s\nPassword: %s", instanceID, password))
 	if err != nil {
 		return brokerapi.ProvisionedServiceSpec{}, err
 	}
