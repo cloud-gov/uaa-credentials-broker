@@ -41,33 +41,59 @@ func (b *DeployerAccountBroker) Provision(
 
 	password := b.generatePassword(b.config.PasswordLength)
 
-	user, err := b.provisionUser(instanceID, password)
-	if err != nil {
-		return brokerapi.ProvisionedServiceSpec{}, err
-	}
-	err = b.cfClient.CreateUser(user.ID)
-	if err != nil {
-		return brokerapi.ProvisionedServiceSpec{}, err
-	}
+	if wearemakingaclient {
+		client, err := b.provisionClient(instanceID, password)
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
 
-	err = b.cfClient.AddUserToOrg(user.ID, details.OrganizationGUID)
-	if err != nil {
-		return brokerapi.ProvisionedServiceSpec{}, err
-	}
-	err = b.cfClient.AddUserToSpace(user.ID, details.SpaceGUID)
-	if err != nil {
-		return brokerapi.ProvisionedServiceSpec{}, err
-	}
+		link, err := b.credentialSender.Send(fmt.Sprintf("Client ID: %s\nClient Secret: %s", instanceID, password))
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
+	} else if wearemakingauser {
 
-	link, err := b.credentialSender.Send(fmt.Sprintf("Username: %s\nPassword: %s", instanceID, password))
-	if err != nil {
-		return brokerapi.ProvisionedServiceSpec{}, err
+		user, err := b.provisionUser(instanceID, password)
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
+		err = b.cfClient.CreateUser(user.ID)
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
+
+		err = b.cfClient.AddUserToOrg(user.ID, details.OrganizationGUID)
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
+		err = b.cfClient.AddUserToSpace(user.ID, details.SpaceGUID)
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
+
+		link, err := b.credentialSender.Send(fmt.Sprintf("Username: %s\nPassword: %s", instanceID, password))
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
 	}
 
 	return brokerapi.ProvisionedServiceSpec{
 		IsAsync:      false,
 		DashboardURL: link,
 	}, nil
+
+}
+
+func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret, redirectURI string) (Client, error) {
+	client := Client{
+		ID: clientID,
+		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
+		Scope: "openid",
+		RedirectURI: redirectURI,
+		ClientSecret: clientSecret
+	}
+
+	return b.uaaClient.CreateClient(client)
 }
 
 func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {

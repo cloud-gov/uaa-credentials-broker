@@ -13,7 +13,23 @@ import (
 
 type FakeUAAClient struct {
 	mock.Mock
-	userGUID string
+	userGUID   string
+	clientGUID string
+}
+
+func (c *FakeUAAClient) GetClient(clientID string) (Client, error) {
+	c.Called(clientID)
+	return Client{ID: c.clientGUID}, nil
+}
+
+func (c *FakeUAAClient) CreateClient(client Client) (Client, error) {
+	c.Called(client)
+	return Client{ID: c.clientGUID}, nil
+}
+
+func (c *FakeUAAClient) DeleteClient(clientID string) error {
+	c.Called(clientID)
+	return nil
 }
 
 func (c *FakeUAAClient) GetUser(userID string) (User, error) {
