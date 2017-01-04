@@ -79,6 +79,9 @@ jobs:
       UAA_API_URL: {{uaa-address-staging}}
       UAA_CLIENT_ID: {{uaa-client-id-test-staging}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-staging}}
+      CLIENT_PLAN_NAME: deployer-account-client
+      USER_PLAN_NAME: deployer-account-user
+      SERVICE_INSTANCE_NAME: deployer-account-acceptance
 
 - name: push-deployer-account-broker-production
   serial_groups: [production]
@@ -153,6 +156,9 @@ jobs:
       UAA_API_URL: {{uaa-address-production}}
       UAA_CLIENT_ID: {{uaa-client-id-test-production}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-production}}
+      CLIENT_PLAN_NAME: deployer-account-client
+      USER_PLAN_NAME: deployer-account-user
+      SERVICE_INSTANCE_NAME: deployer-account-acceptance
 
 resources:
 - name: broker-src
