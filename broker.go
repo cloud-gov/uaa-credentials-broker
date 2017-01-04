@@ -15,27 +15,36 @@ type ProvisionOptions struct {
 }
 
 var (
-	clientAccountGUID = "528632d4-a3d4-4926-8533-4186a18d60a3"
-	userAccountGUID   = "074e652b-b77b-4ac3-8d5b-52144486b1a3"
+	clientAccountGUID = "6b508bb8-2af7-4a75-9efd-7b76a01d705d"
+	userAccountGUID   = "964bd86d-72fa-4852-957f-e4cd802de34b"
 )
 
-var catalog = []brokerapi.Service{{
-	ID:          "964bd86d-72fa-4852-957f-e4cd802de34b",
-	Name:        "deployer-account",
-	Description: "Deployer account",
-	Plans: []brokerapi.ServicePlan{
-		{
-			ID:          clientAccountGUID,
-			Name:        "deployer-account-client",
-			Description: "Deployer account client",
-		},
-		{
-			ID:          userAccountGUID,
-			Name:        "deployer-account-user",
-			Description: "Deployer account user",
+var catalog = []brokerapi.Service{
+	{
+		ID:          clientAccountGUID,
+		Name:        "deployer-account-client",
+		Description: "Deployer client",
+		Plans: []brokerapi.ServicePlan{
+			{
+				ID:          "e6fd8aaa-b5ba-4b19-b52e-44c18ab8ca1d",
+				Name:        "deployer-account-client",
+				Description: "Deployer client",
+			},
 		},
 	},
-}}
+	{
+		ID:          userAccountGUID,
+		Name:        "deployer-account-user",
+		Description: "Deployer user account",
+		Plans: []brokerapi.ServicePlan{
+			{
+				ID:          "074e652b-b77b-4ac3-8d5b-52144486b1a3",
+				Name:        "deployer-account-user",
+				Description: "Deployer user account",
+			},
+		},
+	},
+}
 
 type DeployerAccountBroker struct {
 	uaaClient        AuthClient
@@ -65,7 +74,7 @@ func (b *DeployerAccountBroker) Provision(
 
 	password := b.generatePassword(b.config.PasswordLength)
 
-	switch details.PlanID {
+	switch details.ServiceID {
 	case clientAccountGUID:
 		var opts ProvisionOptions
 		if err := json.Unmarshal(details.RawParameters, &opts); err != nil {
@@ -108,7 +117,7 @@ func (b *DeployerAccountBroker) Provision(
 			return brokerapi.ProvisionedServiceSpec{}, err
 		}
 	default:
-		return brokerapi.ProvisionedServiceSpec{}, fmt.Errorf("Plan ID %s not found", details.PlanID)
+		return brokerapi.ProvisionedServiceSpec{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
 	}
 
 	return brokerapi.ProvisionedServiceSpec{
@@ -148,7 +157,7 @@ func (b *DeployerAccountBroker) Deprovision(
 	details brokerapi.DeprovisionDetails,
 	asyncAllowed bool,
 ) (brokerapi.DeprovisionServiceSpec, error) {
-	switch details.PlanID {
+	switch details.ServiceID {
 	case clientAccountGUID:
 		if err := b.uaaClient.DeleteClient(instanceID); err != nil {
 			return brokerapi.DeprovisionServiceSpec{}, err
@@ -169,7 +178,7 @@ func (b *DeployerAccountBroker) Deprovision(
 			return brokerapi.DeprovisionServiceSpec{}, err
 		}
 	default:
-		return brokerapi.DeprovisionServiceSpec{}, fmt.Errorf("Plan ID %s not found", details.PlanID)
+		return brokerapi.DeprovisionServiceSpec{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
 	}
 
 	return brokerapi.DeprovisionServiceSpec{IsAsync: false}, nil
