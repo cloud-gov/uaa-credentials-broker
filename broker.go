@@ -11,7 +11,7 @@ import (
 )
 
 type ProvisionOptions struct {
-	RedirectURI string `json:"redirect_uri"`
+	RedirectURI []string `json:"redirect_uri"`
 }
 
 var (
@@ -72,7 +72,7 @@ func (b *DeployerAccountBroker) Provision(
 			return brokerapi.ProvisionedServiceSpec{}, err
 		}
 
-		if opts.RedirectURI == "" {
+		if len(opts.RedirectURI) == 0 {
 			return brokerapi.ProvisionedServiceSpec{}, errors.New(`Must pass field "redirect_uri"`)
 		}
 
@@ -117,7 +117,7 @@ func (b *DeployerAccountBroker) Provision(
 	}, nil
 }
 
-func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret, redirectURI string) (Client, error) {
+func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string) (Client, error) {
 	client := Client{
 		ID:                   clientID,
 		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},

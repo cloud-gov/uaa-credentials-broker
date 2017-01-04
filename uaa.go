@@ -31,7 +31,7 @@ type Client struct {
 	Name                 string   `json:"name,omitempty"`
 	AuthorizedGrantTypes []string `json:"authorized_grant_types,omitempty"`
 	Scope                []string `json:"scope,omitempty"`
-	RedirectURI          string   `json:"redirect_uri,omitempty"`
+	RedirectURI          []string `json:"redirect_uri,omitempty"`
 	Active               bool     `json:"active,omitempty"`
 	ClientSecret         string   `json:"client_secret,omitempty"`
 }
