@@ -41,7 +41,7 @@ jobs:
       BROKER_NAME: deployer-account-broker
       AUTH_USER: {{broker-username-staging}}
       AUTH_PASS: {{broker-password-staging}}
-      SERVICES: deployer-account
+      SERVICES: deployer-account-client deployer-account-user
   on_failure:
     put: slack
     params:
@@ -79,6 +79,8 @@ jobs:
       UAA_API_URL: {{uaa-address-staging}}
       UAA_CLIENT_ID: {{uaa-client-id-test-staging}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-staging}}
+      CLIENT_SERVICE_NAME: deployer-account-client
+      USER_SERVICE_NAME: deployer-account-user
       CLIENT_PLAN_NAME: deployer-account-client
       USER_PLAN_NAME: deployer-account-user
       SERVICE_INSTANCE_NAME: deployer-account-acceptance
@@ -118,7 +120,7 @@ jobs:
       BROKER_NAME: deployer-account-broker
       AUTH_USER: {{broker-username-production}}
       AUTH_PASS: {{broker-password-production}}
-      SERVICES: deployer-account
+      SERVICES: deployer-account-client deployer-account-user
   on_failure:
     put: slack
     params:
@@ -156,6 +158,8 @@ jobs:
       UAA_API_URL: {{uaa-address-production}}
       UAA_CLIENT_ID: {{uaa-client-id-test-production}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-production}}
+      CLIENT_SERVICE_NAME: deployer-account-client
+      USER_SERVICE_NAME: deployer-account-user
       CLIENT_PLAN_NAME: deployer-account-client
       USER_PLAN_NAME: deployer-account-user
       SERVICE_INSTANCE_NAME: deployer-account-acceptance

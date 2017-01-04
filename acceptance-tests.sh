@@ -15,7 +15,7 @@ space_guid=$(cf space "${CF_SPACE}" --guid)
 # Test user plan
 
 # Create service instance
-cf create-service deployer-account "${USER_PLAN_NAME}" "${SERVICE_INSTANCE_NAME}"
+cf create-service "${USER_SERVICE_NAME}" "${USER_PLAN_NAME}" "${SERVICE_INSTANCE_NAME}"
 instance_guid=$(cf service "${SERVICE_INSTANCE_NAME}" --guid)
 
 # User exists in UAA
@@ -44,7 +44,7 @@ fi
 # Test client plan
 
 # Create service instance
-cf create-service deployer-account "${CLIENT_PLAN_NAME}" "${SERVICE_INSTANCE_NAME}" -c '{"redirect_uri": ["https://cloud.gov"]}'
+cf create-service "${CLIENT_SERVICE_NAME}" "${CLIENT_PLAN_NAME}" "${SERVICE_INSTANCE_NAME}" -c '{"redirect_uri": ["https://cloud.gov"]}'
 instance_guid=$(cf service "${SERVICE_INSTANCE_NAME}" --guid)
 
 # User exists in UAA
@@ -58,8 +58,6 @@ if uaac client get "${instance_guid}"; then
   echo "Unexpectedly found user ${instance_guid} in UAA"
   exit 1
 fi
-
-####
 
 # Ensure service instance is deleted
 teardown() {

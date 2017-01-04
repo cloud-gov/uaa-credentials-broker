@@ -121,7 +121,7 @@ var _ = Describe("broker", func() {
 					brokerapi.ProvisionDetails{
 						OrganizationGUID: "org-guid",
 						SpaceGUID:        "space-guid",
-						PlanID:           clientAccountGUID,
+						ServiceID:        clientAccountGUID,
 						RawParameters:    []byte(`{"redirect_uri": ["https://cloud.gov"]}`),
 					},
 					false,
@@ -143,7 +143,7 @@ var _ = Describe("broker", func() {
 					context.Background(),
 					"instance-guid",
 					brokerapi.DeprovisionDetails{
-						PlanID: clientAccountGUID,
+						ServiceID: clientAccountGUID,
 					},
 					false,
 				)
@@ -177,7 +177,7 @@ var _ = Describe("broker", func() {
 					brokerapi.ProvisionDetails{
 						OrganizationGUID: "org-guid",
 						SpaceGUID:        "space-guid",
-						PlanID:           userAccountGUID,
+						ServiceID:        userAccountGUID,
 					},
 					false,
 				)
@@ -201,7 +201,7 @@ var _ = Describe("broker", func() {
 					context.Background(),
 					"instance-guid",
 					brokerapi.DeprovisionDetails{
-						PlanID: userAccountGUID,
+						ServiceID: userAccountGUID,
 					},
 					false,
 				)
