@@ -108,57 +108,66 @@ var _ = Describe("broker", func() {
 		}
 	})
 
-	Describe("provision", func() {
-		It("returns a provision service spec", func() {
-			credentialSender.On("Send", "Username: instance-guid\nPassword: password")
-			uaaClient.On("CreateUser", User{
-				UserName: "instance-guid",
-				Password: "password",
-				Emails: []Email{{
-					Value:   "fake@fake.org",
-					Primary: true,
-				}},
-			}).Return(User{ID: "user-guid"}, nil)
-			cfClient.On("CreateUser", "user-guid").Return(User{ID: "user-guid"}, nil)
-			cfClient.On("AddUserToOrg", "user-guid", "org-guid").Return(nil)
-			cfClient.On("AddUserToSpace", "user-guid", "space-guid").Return(nil)
+	Describe("uaa client", func() {
 
-			spec, err := broker.Provision(
-				context.Background(),
-				"instance-guid",
-				brokerapi.ProvisionDetails{
-					OrganizationGUID: "org-guid",
-					SpaceGUID:        "space-guid",
-				},
-				false,
-			)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(spec.IsAsync).To(Equal(false))
-			Expect(spec.DashboardURL).To(Equal("https://fugacious.18f.gov/m/42"))
-
-			credentialSender.AssertExpectations(GinkgoT())
-			uaaClient.AssertExpectations(GinkgoT())
-			cfClient.AssertExpectations(GinkgoT())
-		})
 	})
 
-	Describe("deprovision", func() {
-		It("returns a deprovision service spec", func() {
-			uaaClient.On("GetUser", "instance-guid").Return(User{ID: "user-guid"}, nil)
-			uaaClient.On("DeleteUser", "user-guid").Return(nil)
-			cfClient.On("DeleteUser", "user-guid").Return(nil)
+	Describe("uaa user", func() {
+		Describe("provision", func() {
+			It("returns a provision service spec", func() {
+				credentialSender.On("Send", "Username: instance-guid\nPassword: password")
+				uaaClient.On("CreateUser", User{
+					UserName: "instance-guid",
+					Password: "password",
+					Emails: []Email{{
+						Value:   "fake@fake.org",
+						Primary: true,
+					}},
+				}).Return(User{ID: "user-guid"}, nil)
+				cfClient.On("CreateUser", "user-guid").Return(User{ID: "user-guid"}, nil)
+				cfClient.On("AddUserToOrg", "user-guid", "org-guid").Return(nil)
+				cfClient.On("AddUserToSpace", "user-guid", "space-guid").Return(nil)
 
-			spec, err := broker.Deprovision(
-				context.Background(),
-				"instance-guid",
-				brokerapi.DeprovisionDetails{},
-				false,
-			)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(spec.IsAsync).To(Equal(false))
+				spec, err := broker.Provision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.ProvisionDetails{
+						OrganizationGUID: "org-guid",
+						SpaceGUID:        "space-guid",
+						PlanID:           userAccountGUID,
+					},
+					false,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.IsAsync).To(Equal(false))
+				Expect(spec.DashboardURL).To(Equal("https://fugacious.18f.gov/m/42"))
 
-			uaaClient.AssertExpectations(GinkgoT())
-			cfClient.AssertExpectations(GinkgoT())
+				credentialSender.AssertExpectations(GinkgoT())
+				uaaClient.AssertExpectations(GinkgoT())
+				cfClient.AssertExpectations(GinkgoT())
+			})
+		})
+
+		Describe("deprovision", func() {
+			It("returns a deprovision service spec", func() {
+				uaaClient.On("GetUser", "instance-guid").Return(User{ID: "user-guid"}, nil)
+				uaaClient.On("DeleteUser", "user-guid").Return(nil)
+				cfClient.On("DeleteUser", "user-guid").Return(nil)
+
+				spec, err := broker.Deprovision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.DeprovisionDetails{
+						PlanID: userAccountGUID,
+					},
+					false,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.IsAsync).To(Equal(false))
+
+				uaaClient.AssertExpectations(GinkgoT())
+				cfClient.AssertExpectations(GinkgoT())
+			})
 		})
 	})
 })
