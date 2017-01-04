@@ -42,7 +42,6 @@ type Email struct {
 }
 
 type AuthClient interface {
-	GetClient(clientID string) (Client, error)
 	CreateClient(client Client) (Client, error)
 	DeleteClient(clientID string) error
 	GetUser(userID string) (User, error)
@@ -55,37 +54,6 @@ type UAAClient struct {
 	client   *http.Client
 	endpoint string
 	zone     string
-}
-
-func (c *UAAClient) GetClient(clientID string) (Client, error) {
-	c.logger.Info("uaa-get-client", lager.Data{"clientID": clientID})
-
-	u, _ := url.Parse(fmt.Sprintf("%s/oauth/clients", c.endpoint))
-	q := u.Query()
-	q.Add("filter", fmt.Sprintf(`client_id eq "%s"`, clientID))
-	q.Add("count", "1")
-	u.RawQuery = q.Encode()
-
-	req, _ := http.NewRequest("GET", u.String(), nil)
-	req.Header.Add("X-Identity-Zone-Id", c.zone)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Accept", "application/json")
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return Client{}, err
-	}
-
-	clients := Clients{}
-	err = decodeBody(resp, &clients)
-	if err != nil {
-		return Client{}, err
-	}
-
-	if clients.TotalResults != 1 {
-		return Client{}, fmt.Errorf("Expected to find exactly one client; got %d", clients.TotalResults)
-	}
-
-	return clients.Resources[0], nil
 }
 
 func (c *UAAClient) CreateClient(client Client) (Client, error) {

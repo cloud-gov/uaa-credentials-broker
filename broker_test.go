@@ -17,11 +17,6 @@ type FakeUAAClient struct {
 	clientGUID string
 }
 
-func (c *FakeUAAClient) GetClient(clientID string) (Client, error) {
-	c.Called(clientID)
-	return Client{ID: c.clientGUID}, nil
-}
-
 func (c *FakeUAAClient) CreateClient(client Client) (Client, error) {
 	c.Called(client)
 	return Client{ID: c.clientGUID}, nil
@@ -109,7 +104,55 @@ var _ = Describe("broker", func() {
 	})
 
 	Describe("uaa client", func() {
+		Describe("provision", func() {
+			It("returns a provision service spec", func() {
+				credentialSender.On("Send", "Client ID: instance-guid\nClient Secret: password")
+				uaaClient.On("CreateClient", Client{
+					ID:                   "instance-guid",
+					AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
+					Scope:                []string{"openid"},
+					RedirectURI:          []string{"https://cloud.gov"},
+					ClientSecret:         "password",
+				}).Return(Client{ID: "client-guid"}, nil)
 
+				spec, err := broker.Provision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.ProvisionDetails{
+						OrganizationGUID: "org-guid",
+						SpaceGUID:        "space-guid",
+						PlanID:           clientAccountGUID,
+						RawParameters:    []byte(`{"redirect_uri": ["https://cloud.gov"]}`),
+					},
+					false,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.IsAsync).To(Equal(false))
+				Expect(spec.DashboardURL).To(Equal("https://fugacious.18f.gov/m/42"))
+
+				credentialSender.AssertExpectations(GinkgoT())
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+		})
+
+		Describe("deprovision", func() {
+			It("returns a deprovision service spec", func() {
+				uaaClient.On("DeleteClient", "instance-guid").Return(nil)
+
+				spec, err := broker.Deprovision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.DeprovisionDetails{
+						PlanID: clientAccountGUID,
+					},
+					false,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.IsAsync).To(Equal(false))
+
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+		})
 	})
 
 	Describe("uaa user", func() {
