@@ -41,7 +41,7 @@ jobs:
       BROKER_NAME: uaa-credentials-broker
       AUTH_USER: {{broker-username-staging}}
       AUTH_PASS: {{broker-password-staging}}
-      SERVICES: uaa-credentials-client uaa-credentials-user
+      SERVICES: cloud-gov-service-account cloud-gov-identity-provider
   on_failure:
     put: slack
     params:
@@ -79,10 +79,10 @@ jobs:
       UAA_API_URL: {{uaa-address-staging}}
       UAA_CLIENT_ID: {{uaa-client-id-test-staging}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-staging}}
-      CLIENT_SERVICE_NAME: uaa-credentials-client
-      USER_SERVICE_NAME: uaa-credentials-user
-      CLIENT_PLAN_NAME: uaa-credentials-client
-      USER_PLAN_NAME: uaa-credentials-user
+      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
+      USER_SERVICE_NAME: cloud-gov-service-account
+      CLIENT_PLAN_NAME: oauth-client
+      USER_PLAN_NAME: space-deployer
       SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
 
 - name: push-broker-production
@@ -120,7 +120,7 @@ jobs:
       BROKER_NAME: uaa-credentials-broker
       AUTH_USER: {{broker-username-production}}
       AUTH_PASS: {{broker-password-production}}
-      SERVICES: uaa-credentials-client uaa-credentials-user
+      SERVICES: cloud-gov-service-account cloud-gov-identity-provider
   on_failure:
     put: slack
     params:
@@ -158,10 +158,10 @@ jobs:
       UAA_API_URL: {{uaa-address-production}}
       UAA_CLIENT_ID: {{uaa-client-id-test-production}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-production}}
-      CLIENT_SERVICE_NAME: uaa-credentials-client
-      USER_SERVICE_NAME: uaa-credentials-user
-      CLIENT_PLAN_NAME: uaa-credentials-client
-      USER_PLAN_NAME: uaa-credentials-user
+      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
+      USER_SERVICE_NAME: cloud-gov-service-account
+      CLIENT_PLAN_NAME: oauth-client
+      USER_PLAN_NAME: space-deployer
       SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
 
 resources:

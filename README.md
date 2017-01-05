@@ -11,16 +11,16 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
 * Create service instance:
 
     ```bash
-    $ cf create-service uaa-credentials-user uaa-credentials-user my-deployer-account
+    $ cf create-service cloud-gov-service-account space-deployer my-service-account
     ```
 
 * Get dashboard link from service instance:
 
     ```bash
-    $ cf service my-deployer-account
+    $ cf service my-service-account
 
-    Service instance: my-deployer-account
-    Service: uaa-credentials-user
+    Service instance: my-service-account
+    Service: cloud-gov-service-account
     ...
     Dashboard: https://fugacious.18f.gov/m/k3MtzJWVZaNlnjBYJ7FUdpW2ZkDvhmQz
     ```
@@ -30,7 +30,7 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
 * To delete the acount, delete the service instance:
 
     ```bash
-    $ cf delete-service my-deployer-account
+    $ cf delete-service my-service-account
     ```
 
 ### UAA clients
@@ -38,7 +38,7 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
 * Create service instance:
 
     ```bash
-    $ cf create-service uaa-credentials-client uaa-credentials-client my-uaa-client \
+    $ cf create-service cloud-gov-identity-provider oauth-client my-uaa-client \
         -c '{"redirect_uri": ["https://my.app.cloud.gov"]}'
     ```
 

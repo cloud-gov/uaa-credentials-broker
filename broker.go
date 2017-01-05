@@ -22,25 +22,25 @@ var (
 var catalog = []brokerapi.Service{
 	{
 		ID:          clientAccountGUID,
-		Name:        "uaa-credentials-client",
-		Description: "UAA client credentials",
+		Name:        "cloud-gov-identity-provider",
+		Description: "Manage client credentials for authenticating cloud.gov users in your app",
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          "e6fd8aaa-b5ba-4b19-b52e-44c18ab8ca1d",
-				Name:        "uaa-credentials-client",
-				Description: "UAA client credentials",
+				Name:        "oauth-client",
+				Description: "OAuth client credentials for authenticating cloud.gov users in your app",
 			},
 		},
 	},
 	{
 		ID:          userAccountGUID,
-		Name:        "uaa-credentials-user",
-		Description: "UAA user credentials",
+		Name:        "cloud-gov-service-account",
+		Description: "Manage cloud.gov service accounts with access to your organization",
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          "074e652b-b77b-4ac3-8d5b-52144486b1a3",
-				Name:        "uaa-credentials-user",
-				Description: "UAA user credentials",
+				Name:        "space-deployer",
+				Description: "An account for continuous deployment, limited to a single space",
 			},
 		},
 	},
