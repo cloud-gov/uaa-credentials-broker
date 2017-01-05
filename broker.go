@@ -22,25 +22,25 @@ var (
 var catalog = []brokerapi.Service{
 	{
 		ID:          clientAccountGUID,
-		Name:        "deployer-account-client",
-		Description: "Deployer client",
+		Name:        "uaa-credentials-client",
+		Description: "UAA client credentials",
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          "e6fd8aaa-b5ba-4b19-b52e-44c18ab8ca1d",
-				Name:        "deployer-account-client",
-				Description: "Deployer client",
+				Name:        "uaa-credentials-client",
+				Description: "UAA client credentials",
 			},
 		},
 	},
 	{
 		ID:          userAccountGUID,
-		Name:        "deployer-account-user",
-		Description: "Deployer user account",
+		Name:        "uaa-credentials-user",
+		Description: "UAA user credentials",
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          "074e652b-b77b-4ac3-8d5b-52144486b1a3",
-				Name:        "deployer-account-user",
-				Description: "Deployer user account",
+				Name:        "uaa-credentials-user",
+				Description: "UAA user credentials",
 			},
 		},
 	},

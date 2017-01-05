@@ -1,7 +1,7 @@
 ---
 applications:
-- name: deployer-account-broker
-  command: deployer-account-broker
+- name: uaa-credentials-broker
+  command: uaa-credentials-broker
   buildpack: go_buildpack
   env:
     GOVERSION: go1.7

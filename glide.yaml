@@ -1,4 +1,4 @@
-package: github.com/cloudfoundry-community/deployer-account-broker
+package: github.com/cloudfoundry-community/uaa-credentials-broker
 import:
 - package: code.cloudfoundry.org/lager
 - package: github.com/kelseyhightower/envconfig
