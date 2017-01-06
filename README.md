@@ -1,24 +1,26 @@
-Cloud Foundry Deployer Account Broker
+Cloud Foundry UAA Credentials Broker
 =====================================
-[![Code Climate](https://codeclimate.com/github/18F/deployer-account-broker/badges/gpa.svg)](https://codeclimate.com/github/18F/deployer-account-broker)
+[![Code Climate](https://codeclimate.com/github/cloudfoundry-community/uaa-credentials-broker/badges/gpa.svg)](https://codeclimate.com/github/cloudfoundry-community/uaa-credentials-broker)
 
-This service broker allows Cloud Foundry users to provision and deprovision deployer accounts scoped to a given organization and space. Deployer account credentials can then be used to push applications when password authentication is needed--for example, when deploying from a continuous integration service.
+This service broker allows Cloud Foundry users to provision and deprovision UAA users and clients. UAA users managed by the broker are scoped to a given organization and space and can be used to push applications when password authentication is needed--for example, when deploying from a continuous integration service. UAA clients can be used to [leverage UAA authentication](https://cloud.gov/docs/apps/leveraging-authentication/) in tenant applications.
 
 ## Usage
+
+### UAA users
 
 * Create service instance:
 
     ```bash
-    $ cf create-service deployer-account deployer-account my-deployer-account
+    $ cf create-service cloud-gov-service-account space-deployer my-service-account
     ```
 
 * Get dashboard link from service instance:
 
     ```bash
-    $ cf service my-deployer-account
+    $ cf service my-service-account
 
-    Service instance: my-deployer-account
-    Service: deployer-account
+    Service instance: my-service-account
+    Service: cloud-gov-service-account
     ...
     Dashboard: https://fugacious.18f.gov/m/k3MtzJWVZaNlnjBYJ7FUdpW2ZkDvhmQz
     ```
@@ -28,16 +30,27 @@ This service broker allows Cloud Foundry users to provision and deprovision depl
 * To delete the acount, delete the service instance:
 
     ```bash
-    $ cf delete-service my-deployer-account
+    $ cf delete-service my-service-account
     ```
+
+### UAA clients
+
+* Create service instance:
+
+    ```bash
+    $ cf create-service cloud-gov-identity-provider oauth-client my-uaa-client \
+        -c '{"redirect_uri": ["https://my.app.cloud.gov"]}'
+    ```
+
+* Retrieve credentials and deprovision instance as above
 
 ## Deployment
 
 * Create UAA client:
 
     ```bash
-    $ uaac client add deployer-account-broker \
-        --name deployer-account-broker \
+    $ uaac client add uaa-credentials-broker \
+        --name uaa-credentials-broker \
         --authorized_grant_types client_credentials \
         --authorities scim.write,uaa.admin,cloud_controller.admin \
         --scope uaa.none
@@ -46,7 +59,7 @@ This service broker allows Cloud Foundry users to provision and deprovision depl
 * Update Concourse pipeline:
 
     ```bash
-    fly -t ci set-pipeline -p deployer-account-broker -c pipeline.yml -l credentials.yml
+    fly -t ci set-pipeline -p uaa-credentials-broker -c pipeline.yml -l credentials.yml
     ```
 
 ## Public domain

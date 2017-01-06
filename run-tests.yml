@@ -9,7 +9,7 @@ image_resource:
 
 inputs:
 - name: broker-src
-  path: gopath/src/github.com/18F/deployer-account-broker
+  path: gopath/src/github.com/cloudfoundry-community/uaa-credentials-broker
 
 run:
-  path: gopath/src/github.com/18F/deployer-account-broker/run-tests.sh
+  path: gopath/src/github.com/cloudfoundry-community/uaa-credentials-broker/run-tests.sh

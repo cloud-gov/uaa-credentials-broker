@@ -22,25 +22,25 @@ var (
 var catalog = []brokerapi.Service{
 	{
 		ID:          clientAccountGUID,
-		Name:        "deployer-account-client",
-		Description: "Deployer client",
+		Name:        "cloud-gov-identity-provider",
+		Description: "Manage client credentials for authenticating cloud.gov users in your app",
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          "e6fd8aaa-b5ba-4b19-b52e-44c18ab8ca1d",
-				Name:        "deployer-account-client",
-				Description: "Deployer client",
+				Name:        "oauth-client",
+				Description: "OAuth client credentials for authenticating cloud.gov users in your app",
 			},
 		},
 	},
 	{
 		ID:          userAccountGUID,
-		Name:        "deployer-account-user",
-		Description: "Deployer user account",
+		Name:        "cloud-gov-service-account",
+		Description: "Manage cloud.gov service accounts with access to your organization",
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          "074e652b-b77b-4ac3-8d5b-52144486b1a3",
-				Name:        "deployer-account-user",
-				Description: "Deployer user account",
+				Name:        "space-deployer",
+				Description: "An account for continuous deployment, limited to a single space",
 			},
 		},
 	},

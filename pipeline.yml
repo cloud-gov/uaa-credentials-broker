@@ -1,19 +1,19 @@
 ---
 jobs:
-- name: test-deployer-account-broker
+- name: test-broker
   plan:
   - get: broker-src
     trigger: true
   - task: run-tests
     file: broker-src/run-tests.yml
 
-- name: push-deployer-account-broker-staging
+- name: push-broker-staging
   serial_groups: [staging]
   serial: true
   plan:
   - aggregate:
     - get: broker-src
-      passed: [test-deployer-account-broker]
+      passed: [test-broker]
       trigger: true
     - get: pipeline-tasks
   - put: broker-deploy-staging
@@ -38,15 +38,15 @@ jobs:
       CF_PASSWORD: {{cf-deploy-password-staging}}
       CF_ORGANIZATION: {{cf-organization-staging}}
       CF_SPACE: {{cf-space-staging}}
-      BROKER_NAME: deployer-account-broker
+      BROKER_NAME: uaa-credentials-broker
       AUTH_USER: {{broker-username-staging}}
       AUTH_PASS: {{broker-password-staging}}
-      SERVICES: deployer-account-client deployer-account-user
+      SERVICES: cloud-gov-service-account cloud-gov-identity-provider
   on_failure:
     put: slack
     params:
       text: |
-        :x: FAILED to deploy deployer-account-broker on {{cf-api-url-staging}}
+        :x: FAILED to deploy uaa-credentials-broker on {{cf-api-url-staging}}
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: {{slack-channel}}
       username: {{slack-username}}
@@ -55,18 +55,18 @@ jobs:
     put: slack
     params:
       text: |
-        :white_check_mark: Successfully deployed deployer-account-broker on {{cf-api-url-staging}}
+        :white_check_mark: Successfully deployed uaa-credentials-broker on {{cf-api-url-staging}}
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: {{slack-channel}}
       username: {{slack-username}}
       icon_url: {{slack-icon-url}}
 
-- name: deployer-account-broker-acceptance-tests-staging
+- name: acceptance-tests-staging
   serial_groups: [staging]
   serial: true
   plan:
   - get: broker-src
-    passed: [push-deployer-account-broker-staging]
+    passed: [push-broker-staging]
     trigger: true
   - task: acceptance-tests-staging
     file: broker-src/acceptance-tests.yml
@@ -79,22 +79,22 @@ jobs:
       UAA_API_URL: {{uaa-address-staging}}
       UAA_CLIENT_ID: {{uaa-client-id-test-staging}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-staging}}
-      CLIENT_SERVICE_NAME: deployer-account-client
-      USER_SERVICE_NAME: deployer-account-user
-      CLIENT_PLAN_NAME: deployer-account-client
-      USER_PLAN_NAME: deployer-account-user
-      SERVICE_INSTANCE_NAME: deployer-account-acceptance
+      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
+      USER_SERVICE_NAME: cloud-gov-service-account
+      CLIENT_PLAN_NAME: oauth-client
+      USER_PLAN_NAME: space-deployer
+      SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
 
-- name: push-deployer-account-broker-production
+- name: push-broker-production
   serial_groups: [production]
   serial: true
   plan:
   - aggregate:
     - get: broker-src
-      passed: [deployer-account-broker-acceptance-tests-staging]
+      passed: [acceptance-tests-staging]
       trigger: true
     - get: pipeline-tasks
-      passed: [push-deployer-account-broker-staging]
+      passed: [push-broker-staging]
   - put: broker-deploy-production
     params:
       path: broker-src
@@ -117,15 +117,15 @@ jobs:
       CF_PASSWORD: {{cf-deploy-password-production}}
       CF_ORGANIZATION: {{cf-organization-production}}
       CF_SPACE: {{cf-space-production}}
-      BROKER_NAME: deployer-account-broker
+      BROKER_NAME: uaa-credentials-broker
       AUTH_USER: {{broker-username-production}}
       AUTH_PASS: {{broker-password-production}}
-      SERVICES: deployer-account-client deployer-account-user
+      SERVICES: cloud-gov-service-account cloud-gov-identity-provider
   on_failure:
     put: slack
     params:
       text: |
-        :x: FAILED to deploy deployer-account-broker on {{cf-api-url-production}}
+        :x: FAILED to deploy uaa-credentials-broker on {{cf-api-url-production}}
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: {{slack-channel}}
       username: {{slack-username}}
@@ -134,18 +134,18 @@ jobs:
     put: slack
     params:
       text: |
-        :white_check_mark: Successfully deployed deployer-account-broker on {{cf-api-url-production}}
+        :white_check_mark: Successfully deployed uaa-credentials-broker on {{cf-api-url-production}}
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: {{slack-channel}}
       username: {{slack-username}}
       icon_url: {{slack-icon-url}}
 
-- name: deployer-account-broker-acceptance-tests-production
+- name: acceptance-tests-production
   serial_groups: [production]
   serial: true
   plan:
   - get: broker-src
-    passed: [push-deployer-account-broker-production]
+    passed: [push-broker-production]
     trigger: true
   - task: acceptance-tests-production
     file: broker-src/acceptance-tests.yml
@@ -158,18 +158,18 @@ jobs:
       UAA_API_URL: {{uaa-address-production}}
       UAA_CLIENT_ID: {{uaa-client-id-test-production}}
       UAA_CLIENT_SECRET: {{uaa-client-secret-test-production}}
-      CLIENT_SERVICE_NAME: deployer-account-client
-      USER_SERVICE_NAME: deployer-account-user
-      CLIENT_PLAN_NAME: deployer-account-client
-      USER_PLAN_NAME: deployer-account-user
-      SERVICE_INSTANCE_NAME: deployer-account-acceptance
+      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
+      USER_SERVICE_NAME: cloud-gov-service-account
+      CLIENT_PLAN_NAME: oauth-client
+      USER_PLAN_NAME: space-deployer
+      SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
 
 resources:
 - name: broker-src
   type: git
   source:
-    uri: {{deployer-account-broker-git-url}}
-    branch: {{deployer-account-broker-git-branch}}
+    uri: {{broker-git-url}}
+    branch: {{broker-git-branch}}
 
 - name: pipeline-tasks
   type: git

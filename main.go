@@ -42,7 +42,7 @@ func NewClient(config Config) *http.Client {
 }
 
 func main() {
-	logger := lager.NewLogger("deployer-account-broker")
+	logger := lager.NewLogger("uaa-credentials-broker")
 	logger.RegisterSink(lager.NewWriterSink(os.Stderr, lager.INFO))
 
 	config := Config{}
