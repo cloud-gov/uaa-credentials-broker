@@ -133,6 +133,8 @@ func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, r
 		Scope:                []string{"openid"},
 		RedirectURI:          redirectURI,
 		ClientSecret:         clientSecret,
+		AccessTokenValidity:  b.config.AccessTokenValidity,
+		RefreshTokenValidity: b.config.RefreshTokenValidity,
 	}
 
 	return b.uaaClient.CreateClient(client)

@@ -97,8 +97,10 @@ var _ = Describe("broker", func() {
 				return "password"
 			},
 			config: Config{
-				EmailAddress:   "fake@fake.org",
-				PasswordLength: 32,
+				EmailAddress:         "fake@fake.org",
+				PasswordLength:       32,
+				AccessTokenValidity:  600,
+				RefreshTokenValidity: 86400,
 			},
 		}
 	})
@@ -113,6 +115,8 @@ var _ = Describe("broker", func() {
 					Scope:                []string{"openid"},
 					RedirectURI:          []string{"https://cloud.gov"},
 					ClientSecret:         "password",
+					AccessTokenValidity:  600,
+					RefreshTokenValidity: 86400,
 				}).Return(Client{ID: "client-guid"}, nil)
 
 				spec, err := broker.Provision(
