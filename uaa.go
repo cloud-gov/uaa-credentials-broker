@@ -28,12 +28,14 @@ type Clients struct {
 
 type Client struct {
 	ID                   string   `json:"client_id,omitempty"`
+	ClientSecret         string   `json:"client_secret,omitempty"`
 	Name                 string   `json:"name,omitempty"`
 	AuthorizedGrantTypes []string `json:"authorized_grant_types,omitempty"`
 	Scope                []string `json:"scope,omitempty"`
 	RedirectURI          []string `json:"redirect_uri,omitempty"`
 	Active               bool     `json:"active,omitempty"`
-	ClientSecret         string   `json:"client_secret,omitempty"`
+	AccessTokenValidity  int      `json:"access_token_validity,omitempty"`
+	RefreshTokenValidity int      `json:"refresh_token_validity,omitempty"`
 }
 
 type Email struct {

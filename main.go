@@ -16,19 +16,21 @@ import (
 )
 
 type Config struct {
-	UAAAddress        string `envconfig:"uaa_address" required:"true"`
-	UAAClientID       string `envconfig:"uaa_client_id" required:"true"`
-	UAAClientSecret   string `envconfig:"uaa_client_secret" required:"true"`
-	UAAZone           string `envconfig:"uaa_zone" default:"uaa"`
-	CFAddress         string `envconfig:"cf_address" required:"true"`
-	BrokerUsername    string `envconfig:"broker_username" required:"true"`
-	BrokerPassword    string `envconfig:"broker_password" required:"true"`
-	PasswordLength    int    `envconfig:"password_length" default:"32"`
-	EmailAddress      string `envconfig:"email_address" required:"true"`
-	FugaciousAddress  string `envconfig:"fugacious_address" required:"true"`
-	FugaciousHours    int    `envconfig:"fugacious_hours" default:"2"`
-	FugaciousMaxViews int    `envconfig:"fugacious_max_views" default:"2"`
-	Port              string `envconfig:"port" default:"3000"`
+	UAAAddress           string `envconfig:"uaa_address" required:"true"`
+	UAAClientID          string `envconfig:"uaa_client_id" required:"true"`
+	UAAClientSecret      string `envconfig:"uaa_client_secret" required:"true"`
+	UAAZone              string `envconfig:"uaa_zone" default:"uaa"`
+	CFAddress            string `envconfig:"cf_address" required:"true"`
+	BrokerUsername       string `envconfig:"broker_username" required:"true"`
+	BrokerPassword       string `envconfig:"broker_password" required:"true"`
+	PasswordLength       int    `envconfig:"password_length" default:"32"`
+	EmailAddress         string `envconfig:"email_address" required:"true"`
+	FugaciousAddress     string `envconfig:"fugacious_address" required:"true"`
+	FugaciousHours       int    `envconfig:"fugacious_hours" default:"2"`
+	FugaciousMaxViews    int    `envconfig:"fugacious_max_views" default:"2"`
+	AccessTokenValidity  int    `envconfig:"access_token_validity" default:"600"`
+	RefreshTokenValidity int    `envconfig:"refresh_token_validity" default:"86400"`
+	Port                 string `envconfig:"port" default:"3000"`
 }
 
 func NewClient(config Config) *http.Client {
