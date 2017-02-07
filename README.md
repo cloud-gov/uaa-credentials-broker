@@ -27,7 +27,7 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
 
 * Retrieve credentials from dashboard link.
 
-* To delete the acount, delete the service instance:
+* To delete the account, delete the service instance:
 
     ```bash
     $ cf delete-service my-service-account
@@ -35,14 +35,25 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
 
 ### UAA clients
 
-* Create service instance:
+* First, create a service instance:
 
     ```bash
     $ cf create-service cloud-gov-identity-provider oauth-client my-uaa-client \
-        -c '{"redirect_uri": ["https://my.app.cloud.gov"]}'
+        -c '{"redirect_uri": ["https://my.app.cloud.gov/auth/callback"]}'
     ```
 
-* Retrieve credentials and deprovision instance as above
+* Second, retrieve your `client_id` and `client_secret` by visiting the
+dashboard link accessible via:
+
+    ```bash
+    $ cf service my-uaa-client
+    ```
+
+* When your service is no longer needed, deprovision by:
+
+    ```bash
+    $ cf delete-service my-uaa-client
+    ```
 
 ## Deployment
 
