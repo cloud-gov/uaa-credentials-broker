@@ -137,6 +137,54 @@ var _ = Describe("broker", func() {
 				credentialSender.AssertExpectations(GinkgoT())
 				uaaClient.AssertExpectations(GinkgoT())
 			})
+
+			It("accepts allowed scopes", func() {
+				credentialSender.On("Send", "Client ID: instance-guid\nClient Secret: password")
+				uaaClient.On("CreateClient", Client{
+					ID:                   "instance-guid",
+					AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
+					Scope:                []string{"openid", "cloud_controller.read"},
+					RedirectURI:          []string{"https://cloud.gov"},
+					ClientSecret:         "password",
+					AccessTokenValidity:  600,
+					RefreshTokenValidity: 86400,
+				}).Return(Client{ID: "client-guid"}, nil)
+
+				spec, err := broker.Provision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.ProvisionDetails{
+						OrganizationGUID: "org-guid",
+						SpaceGUID:        "space-guid",
+						ServiceID:        clientAccountGUID,
+						RawParameters:    []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["openid", "cloud_controller.read"]}`),
+					},
+					false,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.IsAsync).To(Equal(false))
+				Expect(spec.DashboardURL).To(Equal("https://fugacious.18f.gov/m/42"))
+
+				credentialSender.AssertExpectations(GinkgoT())
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+
+			It("rejects forbidden scopes", func() {
+				spec, err := broker.Provision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.ProvisionDetails{
+						OrganizationGUID: "org-guid",
+						SpaceGUID:        "space-guid",
+						ServiceID:        clientAccountGUID,
+						RawParameters:    []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["cloud_controller.write"]}`),
+					},
+					false,
+				)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("Scope(s) not permitted: cloud_controller.write"))
+				Expect(spec.IsAsync).To(Equal(false))
+			})
 		})
 
 		Describe("deprovision", func() {
