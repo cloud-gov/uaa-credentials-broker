@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/pivotal-cf/brokerapi"
@@ -12,11 +13,20 @@ import (
 
 type ProvisionOptions struct {
 	RedirectURI []string `json:"redirect_uri"`
+	Scopes      []string `json:"scopes"`
 }
 
 var (
 	clientAccountGUID = "6b508bb8-2af7-4a75-9efd-7b76a01d705d"
 	userAccountGUID   = "964bd86d-72fa-4852-957f-e4cd802de34b"
+)
+
+var (
+	defaultScopes = []string{"openid"}
+	allowedScopes = map[string]bool{
+		"openid":                true,
+		"cloud_controller.read": true,
+	}
 )
 
 var catalog = []brokerapi.Service{
@@ -85,7 +95,7 @@ func (b *DeployerAccountBroker) Provision(
 			return brokerapi.ProvisionedServiceSpec{}, errors.New(`Must pass field "redirect_uri"`)
 		}
 
-		if _, err := b.provisionClient(instanceID, password, opts.RedirectURI); err != nil {
+		if _, err := b.provisionClient(instanceID, password, opts.RedirectURI, opts.Scopes); err != nil {
 			return brokerapi.ProvisionedServiceSpec{}, err
 		}
 
@@ -126,18 +136,29 @@ func (b *DeployerAccountBroker) Provision(
 	}, nil
 }
 
-func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string) (Client, error) {
-	client := Client{
+func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string, scopes []string) (Client, error) {
+	if len(scopes) == 0 {
+		scopes = defaultScopes
+	}
+	forbiddenScopes := []string{}
+	for _, scope := range scopes {
+		if _, ok := allowedScopes[scope]; !ok {
+			forbiddenScopes = append(forbiddenScopes, scope)
+		}
+	}
+	if len(forbiddenScopes) > 0 {
+		return Client{}, fmt.Errorf("Scope(s) not permitted: %s", strings.Join(forbiddenScopes, ", "))
+	}
+
+	return b.uaaClient.CreateClient(Client{
 		ID:                   clientID,
 		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
-		Scope:                []string{"openid"},
+		Scope:                scopes,
 		RedirectURI:          redirectURI,
 		ClientSecret:         clientSecret,
 		AccessTokenValidity:  b.config.AccessTokenValidity,
 		RefreshTokenValidity: b.config.RefreshTokenValidity,
-	}
-
-	return b.uaaClient.CreateClient(client)
+	})
 }
 
 func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {
