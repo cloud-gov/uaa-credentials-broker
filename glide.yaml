@@ -7,3 +7,4 @@ import:
 - package: golang.org/x/oauth2
   subpackages:
   - clientcredentials
+- package: github.com/cloudfoundry-community/go-cfclient

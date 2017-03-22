@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"code.cloudfoundry.org/lager"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pivotal-cf/brokerapi"
 )
 
@@ -19,6 +20,8 @@ type ProvisionOptions struct {
 var (
 	clientAccountGUID = "6b508bb8-2af7-4a75-9efd-7b76a01d705d"
 	userAccountGUID   = "964bd86d-72fa-4852-957f-e4cd802de34b"
+	deployerGUID      = "074e652b-b77b-4ac3-8d5b-52144486b1a3"
+	auditorGUID       = "dc3a6d48-9622-434a-b418-1d920193b575"
 )
 
 var (
@@ -48,9 +51,14 @@ var catalog = []brokerapi.Service{
 		Description: "Manage cloud.gov service accounts with access to your organization",
 		Plans: []brokerapi.ServicePlan{
 			{
-				ID:          "074e652b-b77b-4ac3-8d5b-52144486b1a3",
+				ID:          deployerGUID,
 				Name:        "space-deployer",
-				Description: "An account for continuous deployment, limited to a single space",
+				Description: "A service account for continuous deployment, limited to a single space",
+			},
+			{
+				ID:          auditorGUID,
+				Name:        "space-auditor",
+				Description: "A service account for auditing configuration and monitoring events limited to a single space",
 			},
 		},
 	},
@@ -108,18 +116,30 @@ func (b *DeployerAccountBroker) Provision(
 		if err != nil {
 			return brokerapi.ProvisionedServiceSpec{}, err
 		}
-		err = b.cfClient.CreateUser(user.ID)
+		_, err = b.cfClient.CreateUser(cfclient.UserRequest{Guid: user.ID})
 		if err != nil {
 			return brokerapi.ProvisionedServiceSpec{}, err
 		}
 
-		err = b.cfClient.AddUserToOrg(user.ID, details.OrganizationGUID)
-		if err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
-		}
-		err = b.cfClient.AddUserToSpace(user.ID, details.SpaceGUID)
-		if err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
+		switch details.PlanID {
+		case deployerGUID:
+			_, err = b.cfClient.AssociateOrgUserByUsername(details.OrganizationGUID, user.UserName)
+			if err != nil {
+				return brokerapi.ProvisionedServiceSpec{}, err
+			}
+			_, err = b.cfClient.AssociateSpaceDeveloperByUsername(details.SpaceGUID, user.UserName)
+			if err != nil {
+				return brokerapi.ProvisionedServiceSpec{}, err
+			}
+		case auditorGUID:
+			_, err = b.cfClient.AssociateOrgAuditorByUsername(details.OrganizationGUID, user.UserName)
+			if err != nil {
+				return brokerapi.ProvisionedServiceSpec{}, err
+			}
+			_, err = b.cfClient.AssociateSpaceAuditorByUsername(details.SpaceGUID, user.UserName)
+			if err != nil {
+				return brokerapi.ProvisionedServiceSpec{}, err
+			}
 		}
 
 		link, err = b.credentialSender.Send(fmt.Sprintf("Username: %s\nPassword: %s", instanceID, password))

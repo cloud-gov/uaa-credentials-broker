@@ -4,16 +4,20 @@ import (
 	"context"
 
 	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pivotal-cf/brokerapi"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/18F/uaa-credentials-broker/mocks"
 )
 
 type FakeUAAClient struct {
 	mock.Mock
 	userGUID   string
+	userName   string
 	clientGUID string
 }
 
@@ -34,35 +38,11 @@ func (c *FakeUAAClient) GetUser(userID string) (User, error) {
 
 func (c *FakeUAAClient) CreateUser(user User) (User, error) {
 	c.Called(user)
-	return User{ID: c.userGUID}, nil
+	return User{ID: c.userGUID, UserName: c.userName}, nil
 }
 
 func (c *FakeUAAClient) DeleteUser(userID string) error {
 	c.Called(userID)
-	return nil
-}
-
-type FakeCFClient struct {
-	mock.Mock
-}
-
-func (c *FakeCFClient) CreateUser(userID string) error {
-	c.Called(userID)
-	return nil
-}
-
-func (c *FakeCFClient) DeleteUser(userID string) error {
-	c.Called(userID)
-	return nil
-}
-
-func (c *FakeCFClient) AddUserToOrg(userID, orgID string) error {
-	c.Called(userID, orgID)
-	return nil
-}
-
-func (c *FakeCFClient) AddUserToSpace(userID, spaceID string) error {
-	c.Called(userID, spaceID)
 	return nil
 }
 
@@ -79,14 +59,14 @@ func (s FakeCredentialSender) Send(message string) (string, error) {
 var _ = Describe("broker", func() {
 	var (
 		uaaClient        FakeUAAClient
-		cfClient         FakeCFClient
+		cfClient         mocks.PAASClient
 		credentialSender FakeCredentialSender
 		broker           DeployerAccountBroker
 	)
 
 	BeforeEach(func() {
-		uaaClient = FakeUAAClient{userGUID: "user-guid"}
-		cfClient = FakeCFClient{}
+		uaaClient = FakeUAAClient{userGUID: "user-guid", userName: "instance-guid"}
+		cfClient = mocks.PAASClient{}
 		credentialSender = FakeCredentialSender{link: "https://fugacious.18f.gov/m/42"}
 		broker = DeployerAccountBroker{
 			uaaClient:        &uaaClient,
@@ -209,7 +189,7 @@ var _ = Describe("broker", func() {
 
 	Describe("uaa user", func() {
 		Describe("provision", func() {
-			It("returns a provision service spec", func() {
+			It("returns a provision service spec for space-deployer", func() {
 				credentialSender.On("Send", "Username: instance-guid\nPassword: password")
 				uaaClient.On("CreateUser", User{
 					UserName: "instance-guid",
@@ -219,9 +199,9 @@ var _ = Describe("broker", func() {
 						Primary: true,
 					}},
 				}).Return(User{ID: "user-guid"}, nil)
-				cfClient.On("CreateUser", "user-guid").Return(User{ID: "user-guid"}, nil)
-				cfClient.On("AddUserToOrg", "user-guid", "org-guid").Return(nil)
-				cfClient.On("AddUserToSpace", "user-guid", "space-guid").Return(nil)
+				cfClient.On("CreateUser", cfclient.UserRequest{Guid: "user-guid"}).Return(cfclient.User{Guid: "user-guid"}, nil)
+				cfClient.On("AssociateOrgUserByUsername", "org-guid", "instance-guid").Return(cfclient.Org{}, nil)
+				cfClient.On("AssociateSpaceDeveloperByUsername", "space-guid", "instance-guid").Return(cfclient.Space{}, nil)
 
 				spec, err := broker.Provision(
 					context.Background(),
@@ -230,6 +210,41 @@ var _ = Describe("broker", func() {
 						OrganizationGUID: "org-guid",
 						SpaceGUID:        "space-guid",
 						ServiceID:        userAccountGUID,
+						PlanID:           deployerGUID,
+					},
+					false,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(spec.IsAsync).To(Equal(false))
+				Expect(spec.DashboardURL).To(Equal("https://fugacious.18f.gov/m/42"))
+
+				credentialSender.AssertExpectations(GinkgoT())
+				uaaClient.AssertExpectations(GinkgoT())
+				cfClient.AssertExpectations(GinkgoT())
+			})
+
+			It("returns a provision service spec for space-auditor", func() {
+				credentialSender.On("Send", "Username: instance-guid\nPassword: password")
+				uaaClient.On("CreateUser", User{
+					UserName: "instance-guid",
+					Password: "password",
+					Emails: []Email{{
+						Value:   "fake@fake.org",
+						Primary: true,
+					}},
+				}).Return(User{ID: "user-guid"}, nil)
+				cfClient.On("CreateUser", cfclient.UserRequest{Guid: "user-guid"}).Return(cfclient.User{Guid: "user-guid"}, nil)
+				cfClient.On("AssociateOrgAuditorByUsername", "org-guid", "instance-guid").Return(cfclient.Org{}, nil)
+				cfClient.On("AssociateSpaceAuditorByUsername", "space-guid", "instance-guid").Return(cfclient.Space{}, nil)
+
+				spec, err := broker.Provision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.ProvisionDetails{
+						OrganizationGUID: "org-guid",
+						SpaceGUID:        "space-guid",
+						ServiceID:        userAccountGUID,
+						PlanID:           auditorGUID,
 					},
 					false,
 				)

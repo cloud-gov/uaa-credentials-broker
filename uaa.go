@@ -71,8 +71,6 @@ func (c *UAAClient) CreateClient(client Client) (Client, error) {
 		return Client{}, err
 	}
 
-	fmt.Println(resp, resp.Request, client)
-
 	if resp.StatusCode != 201 {
 		return Client{}, fmt.Errorf("Expected status 201; got: %d", resp.StatusCode)
 	}
@@ -146,8 +144,6 @@ func (c *UAAClient) CreateUser(user User) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
-
-	fmt.Println(resp, resp.Request, user)
 
 	if resp.StatusCode != 201 {
 		return User{}, fmt.Errorf("Expected status 201; got: %d", resp.StatusCode)
