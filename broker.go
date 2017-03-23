@@ -121,21 +121,18 @@ func (b *DeployerAccountBroker) Provision(
 			return brokerapi.ProvisionedServiceSpec{}, err
 		}
 
+		_, err = b.cfClient.AssociateOrgUserByUsername(details.OrganizationGUID, user.UserName)
+		if err != nil {
+			return brokerapi.ProvisionedServiceSpec{}, err
+		}
+
 		switch details.PlanID {
 		case deployerGUID:
-			_, err = b.cfClient.AssociateOrgUserByUsername(details.OrganizationGUID, user.UserName)
-			if err != nil {
-				return brokerapi.ProvisionedServiceSpec{}, err
-			}
 			_, err = b.cfClient.AssociateSpaceDeveloperByUsername(details.SpaceGUID, user.UserName)
 			if err != nil {
 				return brokerapi.ProvisionedServiceSpec{}, err
 			}
 		case auditorGUID:
-			_, err = b.cfClient.AssociateOrgAuditorByUsername(details.OrganizationGUID, user.UserName)
-			if err != nil {
-				return brokerapi.ProvisionedServiceSpec{}, err
-			}
 			_, err = b.cfClient.AssociateSpaceAuditorByUsername(details.SpaceGUID, user.UserName)
 			if err != nil {
 				return brokerapi.ProvisionedServiceSpec{}, err

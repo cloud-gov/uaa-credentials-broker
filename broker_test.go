@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/18F/uaa-credentials-broker/mocks"
+	"github.com/cloudfoundry-community/uaa-credentials-broker/mocks"
 )
 
 type FakeUAAClient struct {
@@ -234,7 +234,7 @@ var _ = Describe("broker", func() {
 					}},
 				}).Return(User{ID: "user-guid"}, nil)
 				cfClient.On("CreateUser", cfclient.UserRequest{Guid: "user-guid"}).Return(cfclient.User{Guid: "user-guid"}, nil)
-				cfClient.On("AssociateOrgAuditorByUsername", "org-guid", "instance-guid").Return(cfclient.Org{}, nil)
+				cfClient.On("AssociateOrgUserByUsername", "org-guid", "instance-guid").Return(cfclient.Org{}, nil)
 				cfClient.On("AssociateSpaceAuditorByUsername", "space-guid", "instance-guid").Return(cfclient.Space{}, nil)
 
 				spec, err := broker.Provision(
