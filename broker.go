@@ -15,6 +15,7 @@ import (
 type ProvisionOptions struct {
 	RedirectURI []string `json:"redirect_uri"`
 	Scopes      []string `json:"scopes"`
+	Name        string   `json:"name"`
 }
 
 var (
@@ -103,7 +104,7 @@ func (b *DeployerAccountBroker) Provision(
 			return brokerapi.ProvisionedServiceSpec{}, errors.New(`Must pass field "redirect_uri"`)
 		}
 
-		if _, err := b.provisionClient(instanceID, password, opts.RedirectURI, opts.Scopes); err != nil {
+		if _, err := b.provisionClient(instanceID, password, opts.RedirectURI, opts.Scopes, opts.Name); err != nil {
 			return brokerapi.ProvisionedServiceSpec{}, err
 		}
 
@@ -153,7 +154,7 @@ func (b *DeployerAccountBroker) Provision(
 	}, nil
 }
 
-func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string, scopes []string) (Client, error) {
+func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string, scopes []string, name string) (Client, error) {
 	if len(scopes) == 0 {
 		scopes = defaultScopes
 	}
@@ -169,6 +170,7 @@ func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, r
 
 	return b.uaaClient.CreateClient(Client{
 		ID:                   clientID,
+		Name:                 name,
 		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
 		Scope:                scopes,
 		RedirectURI:          redirectURI,
