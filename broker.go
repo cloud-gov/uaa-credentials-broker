@@ -87,50 +87,40 @@ func (b *DeployerAccountBroker) Provision(
 	return brokerapi.ProvisionedServiceSpec{}, nil
 }
 
-func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string, scopes []string) (Client, error) {
-	if len(scopes) == 0 {
-		scopes = defaultScopes
-	}
-	forbiddenScopes := []string{}
-	for _, scope := range scopes {
-		if _, ok := allowedScopes[scope]; !ok {
-			forbiddenScopes = append(forbiddenScopes, scope)
-		}
-	}
-	if len(forbiddenScopes) > 0 {
-		return Client{}, fmt.Errorf("Scope(s) not permitted: %s", strings.Join(forbiddenScopes, ", "))
-	}
-
-	return b.uaaClient.CreateClient(Client{
-		ID:                   clientID,
-		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
-		Scope:                scopes,
-		RedirectURI:          redirectURI,
-		ClientSecret:         clientSecret,
-		AccessTokenValidity:  b.config.AccessTokenValidity,
-		RefreshTokenValidity: b.config.RefreshTokenValidity,
-	})
-}
-
-func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {
-	user := User{
-		UserName: userID,
-		Password: password,
-		Emails: []Email{{
-			Value:   b.config.EmailAddress,
-			Primary: true,
-		}},
-	}
-
-	return b.uaaClient.CreateUser(user)
-}
-
 func (b *DeployerAccountBroker) Deprovision(
 	context context.Context,
 	instanceID string,
 	details brokerapi.DeprovisionDetails,
 	asyncAllowed bool,
 ) (brokerapi.DeprovisionServiceSpec, error) {
+	// Handle instances created before credential management was moved to bind and unbind
+	switch details.ServiceID {
+	case clientAccountGUID:
+		if err := b.uaaClient.DeleteClient(instanceID); err != nil && !strings.Contains(err.Error(), "404") {
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
+	case userAccountGUID:
+		user, err := b.uaaClient.GetUser(instanceID)
+		if err != nil {
+			if strings.Contains(err.Error(), "got 0") {
+				return brokerapi.DeprovisionServiceSpec{}, nil
+			}
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
+
+		err = b.cfClient.DeleteUser(user.ID)
+		if err != nil {
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
+
+		err = b.uaaClient.DeleteUser(user.ID)
+		if err != nil {
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
+	default:
+		return brokerapi.DeprovisionServiceSpec{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
+	}
+
 	return brokerapi.DeprovisionServiceSpec{}, nil
 }
 
@@ -206,9 +196,11 @@ func (b *DeployerAccountBroker) Bind(
 				"password": password,
 			},
 		}, nil
+	default:
+		return brokerapi.Binding{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
 	}
 
-	return brokerapi.Binding{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
+	return brokerapi.Binding{}, nil
 }
 
 func (b *DeployerAccountBroker) Unbind(
@@ -249,4 +241,42 @@ func (b *DeployerAccountBroker) Update(context context.Context, instanceID strin
 
 func (b *DeployerAccountBroker) LastOperation(context context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
 	return brokerapi.LastOperation{}, errors.New("Broker does not support last operation")
+}
+
+func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string, scopes []string) (Client, error) {
+	if len(scopes) == 0 {
+		scopes = defaultScopes
+	}
+	forbiddenScopes := []string{}
+	for _, scope := range scopes {
+		if _, ok := allowedScopes[scope]; !ok {
+			forbiddenScopes = append(forbiddenScopes, scope)
+		}
+	}
+	if len(forbiddenScopes) > 0 {
+		return Client{}, fmt.Errorf("Scope(s) not permitted: %s", strings.Join(forbiddenScopes, ", "))
+	}
+
+	return b.uaaClient.CreateClient(Client{
+		ID:                   clientID,
+		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
+		Scope:                scopes,
+		RedirectURI:          redirectURI,
+		ClientSecret:         clientSecret,
+		AccessTokenValidity:  b.config.AccessTokenValidity,
+		RefreshTokenValidity: b.config.RefreshTokenValidity,
+	})
+}
+
+func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {
+	user := User{
+		UserName: userID,
+		Password: password,
+		Emails: []Email{{
+			Value:   b.config.EmailAddress,
+			Primary: true,
+		}},
+	}
+
+	return b.uaaClient.CreateUser(user)
 }
