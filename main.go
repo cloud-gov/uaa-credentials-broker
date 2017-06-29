@@ -26,9 +26,6 @@ type Config struct {
 	BrokerPassword       string `envconfig:"broker_password" required:"true"`
 	PasswordLength       int    `envconfig:"password_length" default:"32"`
 	EmailAddress         string `envconfig:"email_address" required:"true"`
-	FugaciousAddress     string `envconfig:"fugacious_address" required:"true"`
-	FugaciousHours       int    `envconfig:"fugacious_hours" default:"2"`
-	FugaciousMaxViews    int    `envconfig:"fugacious_max_views" default:"2"`
 	AccessTokenValidity  int    `envconfig:"access_token_validity" default:"600"`
 	RefreshTokenValidity int    `envconfig:"refresh_token_validity" default:"86400"`
 	Port                 string `envconfig:"port" default:"3000"`
@@ -73,12 +70,7 @@ func main() {
 			zone:     config.UAAZone,
 			client:   client,
 		},
-		cfClient: cfClient,
-		credentialSender: FugaciousCredentialSender{
-			endpoint: config.FugaciousAddress,
-			hours:    config.FugaciousHours,
-			maxViews: config.FugaciousMaxViews,
-		},
+		cfClient:         cfClient,
 		generatePassword: GenerateSecurePassword,
 		config:           config,
 	}

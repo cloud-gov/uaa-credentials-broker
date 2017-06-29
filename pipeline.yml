@@ -29,7 +29,6 @@ jobs:
         BROKER_USERNAME: {{broker-username-staging}}
         BROKER_PASSWORD: {{broker-password-staging}}
         EMAIL_ADDRESS: {{email-address-staging}}
-        FUGACIOUS_ADDRESS: {{fugacious-address-staging}}
   - task: update-broker
     file: pipeline-tasks/register-service-broker.yml
     params:
@@ -108,7 +107,6 @@ jobs:
         BROKER_USERNAME: {{broker-username-production}}
         BROKER_PASSWORD: {{broker-password-production}}
         EMAIL_ADDRESS: {{email-address-production}}
-        FUGACIOUS_ADDRESS: {{fugacious-address-production}}
   - task: update-broker-identity-provider
     file: pipeline-tasks/register-service-broker.yml
     params:
