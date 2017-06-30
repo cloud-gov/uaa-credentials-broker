@@ -4,4 +4,4 @@ applications:
   command: uaa-credentials-broker
   buildpack: go_buildpack
   env:
-    GOVERSION: go1.7
+    GOVERSION: go1.8
