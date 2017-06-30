@@ -40,15 +40,15 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
 * Create a service instance:
 
     ```bash
-    $ cf create-service cloud-gov-identity-provider oauth-client my-uaa-client \
-        -c '{"redirect_uri": ["https://my.app.cloud.gov/auth/callback"]}'
+    $ cf create-service cloud-gov-identity-provider oauth-client my-uaa-client
     ```
 
 * Create service key:
 dashboard link accessible via:
 
     ```bash
-    $ cf create-service-key my-uaa-client my-service-key
+    $ cf create-service-key my-uaa-client my-service-key \
+        -c '{"redirect_uri": ["https://my.app.cloud.gov/auth/callback"]}'
     ```
 
 * Retrieve credentials from service key:
