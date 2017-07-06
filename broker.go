@@ -45,6 +45,9 @@ var catalog = []brokerapi.Service{
 				Description: "OAuth client credentials for authenticating cloud.gov users in your app",
 			},
 		},
+		Metadata: &brokerapi.ServiceMetadata{
+			DocumentationUrl: "https://cloud.gov/docs/services/cloud-gov-identity-provider/",
+		},
 	},
 	{
 		ID:          userAccountGUID,
@@ -62,6 +65,9 @@ var catalog = []brokerapi.Service{
 				Name:        "space-auditor",
 				Description: "A service account for auditing configuration and monitoring events limited to a single space",
 			},
+		},
+		Metadata: &brokerapi.ServiceMetadata{
+			DocumentationUrl: "https://cloud.gov/docs/services/cloud-gov-service-account/",
 		},
 	},
 }
@@ -84,7 +90,10 @@ func (b *DeployerAccountBroker) Provision(
 	details brokerapi.ProvisionDetails,
 	asyncAllowed bool,
 ) (brokerapi.ProvisionedServiceSpec, error) {
-	return brokerapi.ProvisionedServiceSpec{}, nil
+	// TODO: Drop after 2017-07-12
+	return brokerapi.ProvisionedServiceSpec{
+		DashboardURL: "https://cloud.gov/updates/2017-07-05-changes-to-credentials-broker/",
+	}, nil
 }
 
 func (b *DeployerAccountBroker) Deprovision(
