@@ -126,3 +126,45 @@ func (_m *PAASClient) DeleteUser(userID string) error {
 
 	return r0
 }
+
+// GetSpaceByGuid provides a mock function with given fields: guid
+func (_m *PAASClient) GetSpaceByGuid(guid string) (cfclient.Space, error) {
+	ret := _m.Called(guid)
+
+	var r0 cfclient.Space
+	if rf, ok := ret.Get(0).(func(string) cfclient.Space); ok {
+		r0 = rf(guid)
+	} else {
+		r0 = ret.Get(0).(cfclient.Space)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(guid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ServiceInstanceByGuid provides a mock function with given fields: guid
+func (_m *PAASClient) ServiceInstanceByGuid(guid string) (cfclient.ServiceInstance, error) {
+	ret := _m.Called(guid)
+
+	var r0 cfclient.ServiceInstance
+	if rf, ok := ret.Get(0).(func(string) cfclient.ServiceInstance); ok {
+		r0 = rf(guid)
+	} else {
+		r0 = ret.Get(0).(cfclient.ServiceInstance)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(guid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

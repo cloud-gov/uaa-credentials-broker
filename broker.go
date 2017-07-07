@@ -12,7 +12,7 @@ import (
 	"github.com/pivotal-cf/brokerapi"
 )
 
-type ProvisionOptions struct {
+type BindOptions struct {
 	RedirectURI []string `json:"redirect_uri"`
 	Scopes      []string `json:"scopes"`
 }
@@ -37,6 +37,7 @@ var catalog = []brokerapi.Service{
 		ID:          clientAccountGUID,
 		Name:        "cloud-gov-identity-provider",
 		Description: "Manage client credentials for authenticating cloud.gov users in your app",
+		Bindable:    true,
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          "e6fd8aaa-b5ba-4b19-b52e-44c18ab8ca1d",
@@ -44,11 +45,15 @@ var catalog = []brokerapi.Service{
 				Description: "OAuth client credentials for authenticating cloud.gov users in your app",
 			},
 		},
+		Metadata: &brokerapi.ServiceMetadata{
+			DocumentationUrl: "https://cloud.gov/docs/services/cloud-gov-identity-provider/",
+		},
 	},
 	{
 		ID:          userAccountGUID,
 		Name:        "cloud-gov-service-account",
 		Description: "Manage cloud.gov service accounts with access to your organization",
+		Bindable:    true,
 		Plans: []brokerapi.ServicePlan{
 			{
 				ID:          deployerGUID,
@@ -61,13 +66,15 @@ var catalog = []brokerapi.Service{
 				Description: "A service account for auditing configuration and monitoring events limited to a single space",
 			},
 		},
+		Metadata: &brokerapi.ServiceMetadata{
+			DocumentationUrl: "https://cloud.gov/docs/services/cloud-gov-service-account/",
+		},
 	},
 }
 
 type DeployerAccountBroker struct {
 	uaaClient        AuthClient
 	cfClient         PAASClient
-	credentialSender CredentialSender
 	generatePassword PasswordGenerator
 	logger           lager.Logger
 	config           Config
@@ -83,74 +90,166 @@ func (b *DeployerAccountBroker) Provision(
 	details brokerapi.ProvisionDetails,
 	asyncAllowed bool,
 ) (brokerapi.ProvisionedServiceSpec, error) {
-	b.logger.Info("provision", lager.Data{"instanceID": instanceID})
+	// TODO: Drop after 2017-07-12
+	return brokerapi.ProvisionedServiceSpec{
+		DashboardURL: "https://cloud.gov/updates/2017-07-05-changes-to-credentials-broker/",
+	}, nil
+}
 
-	var (
-		link string
-		err  error
-	)
+func (b *DeployerAccountBroker) Deprovision(
+	context context.Context,
+	instanceID string,
+	details brokerapi.DeprovisionDetails,
+	asyncAllowed bool,
+) (brokerapi.DeprovisionServiceSpec, error) {
+	// Handle instances created before credential management was moved to bind and unbind
+	switch details.ServiceID {
+	case clientAccountGUID:
+		if err := b.uaaClient.DeleteClient(instanceID); err != nil && !strings.Contains(err.Error(), "404") {
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
+	case userAccountGUID:
+		user, err := b.uaaClient.GetUser(instanceID)
+		if err != nil {
+			if strings.Contains(err.Error(), "got 0") {
+				return brokerapi.DeprovisionServiceSpec{}, nil
+			}
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
 
+		err = b.cfClient.DeleteUser(user.ID)
+		if err != nil {
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
+
+		err = b.uaaClient.DeleteUser(user.ID)
+		if err != nil {
+			return brokerapi.DeprovisionServiceSpec{}, err
+		}
+	default:
+		return brokerapi.DeprovisionServiceSpec{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
+	}
+
+	return brokerapi.DeprovisionServiceSpec{}, nil
+}
+
+func (b *DeployerAccountBroker) Bind(
+	context context.Context,
+	instanceID, bindingID string,
+	details brokerapi.BindDetails,
+) (brokerapi.Binding, error) {
 	password := b.generatePassword(b.config.PasswordLength)
 
 	switch details.ServiceID {
 	case clientAccountGUID:
-		var opts ProvisionOptions
+		var opts BindOptions
 		if err := json.Unmarshal(details.RawParameters, &opts); err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
+			return brokerapi.Binding{}, err
 		}
 
 		if len(opts.RedirectURI) == 0 {
-			return brokerapi.ProvisionedServiceSpec{}, errors.New(`Must pass field "redirect_uri"`)
+			return brokerapi.Binding{}, errors.New(`Must pass field "redirect_uri"`)
 		}
 
-		if _, err := b.provisionClient(instanceID, password, opts.RedirectURI, opts.Scopes); err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
+		if _, err := b.provisionClient(bindingID, password, opts.RedirectURI, opts.Scopes); err != nil {
+			return brokerapi.Binding{}, err
 		}
 
-		link, err = b.credentialSender.Send(fmt.Sprintf("Client ID: %s\nClient Secret: %s", instanceID, password))
-		if err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
-		}
+		return brokerapi.Binding{
+			Credentials: map[string]string{
+				"client_id":     bindingID,
+				"client_secret": password,
+			},
+		}, nil
 	case userAccountGUID:
-		user, err := b.provisionUser(instanceID, password)
+		instance, err := b.cfClient.ServiceInstanceByGuid(instanceID)
 		if err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
+			return brokerapi.Binding{}, err
+		}
+
+		space, err := b.cfClient.GetSpaceByGuid(instance.SpaceGuid)
+		if err != nil {
+			return brokerapi.Binding{}, err
+		}
+
+		user, err := b.provisionUser(bindingID, password)
+		if err != nil {
+			return brokerapi.Binding{}, err
 		}
 		_, err = b.cfClient.CreateUser(cfclient.UserRequest{Guid: user.ID})
 		if err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
+			return brokerapi.Binding{}, err
 		}
 
-		_, err = b.cfClient.AssociateOrgUserByUsername(details.OrganizationGUID, user.UserName)
+		_, err = b.cfClient.AssociateOrgUserByUsername(space.OrganizationGuid, user.UserName)
 		if err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
+			return brokerapi.Binding{}, err
 		}
 
 		switch details.PlanID {
 		case deployerGUID:
-			_, err = b.cfClient.AssociateSpaceDeveloperByUsername(details.SpaceGUID, user.UserName)
+			_, err = b.cfClient.AssociateSpaceDeveloperByUsername(instance.SpaceGuid, user.UserName)
 			if err != nil {
-				return brokerapi.ProvisionedServiceSpec{}, err
+				return brokerapi.Binding{}, err
 			}
 		case auditorGUID:
-			_, err = b.cfClient.AssociateSpaceAuditorByUsername(details.SpaceGUID, user.UserName)
+			_, err = b.cfClient.AssociateSpaceAuditorByUsername(instance.SpaceGuid, user.UserName)
 			if err != nil {
-				return brokerapi.ProvisionedServiceSpec{}, err
+				return brokerapi.Binding{}, err
 			}
 		}
 
-		link, err = b.credentialSender.Send(fmt.Sprintf("Username: %s\nPassword: %s", instanceID, password))
-		if err != nil {
-			return brokerapi.ProvisionedServiceSpec{}, err
-		}
+		return brokerapi.Binding{
+			Credentials: map[string]string{
+				"username": bindingID,
+				"password": password,
+			},
+		}, nil
 	default:
-		return brokerapi.ProvisionedServiceSpec{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
+		return brokerapi.Binding{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
 	}
 
-	return brokerapi.ProvisionedServiceSpec{
-		IsAsync:      false,
-		DashboardURL: link,
-	}, nil
+	return brokerapi.Binding{}, nil
+}
+
+func (b *DeployerAccountBroker) Unbind(
+	context context.Context,
+	instanceID, bindingID string,
+	details brokerapi.UnbindDetails,
+) error {
+	switch details.ServiceID {
+	case clientAccountGUID:
+		if err := b.uaaClient.DeleteClient(bindingID); err != nil {
+			return err
+		}
+	case userAccountGUID:
+		user, err := b.uaaClient.GetUser(bindingID)
+		if err != nil {
+			return err
+		}
+
+		err = b.cfClient.DeleteUser(user.ID)
+		if err != nil {
+			return err
+		}
+
+		err = b.uaaClient.DeleteUser(user.ID)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("Service ID %s not found", details.ServiceID)
+	}
+
+	return nil
+}
+
+func (b *DeployerAccountBroker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
+	return brokerapi.UpdateServiceSpec{}, errors.New("Broker does not support update")
+}
+
+func (b *DeployerAccountBroker) LastOperation(context context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
+	return brokerapi.LastOperation{}, errors.New("Broker does not support last operation")
 }
 
 func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string, scopes []string) (Client, error) {
@@ -189,53 +288,4 @@ func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, er
 	}
 
 	return b.uaaClient.CreateUser(user)
-}
-
-func (b *DeployerAccountBroker) Deprovision(
-	context context.Context,
-	instanceID string,
-	details brokerapi.DeprovisionDetails,
-	asyncAllowed bool,
-) (brokerapi.DeprovisionServiceSpec, error) {
-	switch details.ServiceID {
-	case clientAccountGUID:
-		if err := b.uaaClient.DeleteClient(instanceID); err != nil {
-			return brokerapi.DeprovisionServiceSpec{}, err
-		}
-	case userAccountGUID:
-		user, err := b.uaaClient.GetUser(instanceID)
-		if err != nil {
-			return brokerapi.DeprovisionServiceSpec{}, err
-		}
-
-		err = b.cfClient.DeleteUser(user.ID)
-		if err != nil {
-			return brokerapi.DeprovisionServiceSpec{}, err
-		}
-
-		err = b.uaaClient.DeleteUser(user.ID)
-		if err != nil {
-			return brokerapi.DeprovisionServiceSpec{}, err
-		}
-	default:
-		return brokerapi.DeprovisionServiceSpec{}, fmt.Errorf("Service ID %s not found", details.ServiceID)
-	}
-
-	return brokerapi.DeprovisionServiceSpec{IsAsync: false}, nil
-}
-
-func (b *DeployerAccountBroker) Bind(context context.Context, instanceID, bindingID string, details brokerapi.BindDetails) (brokerapi.Binding, error) {
-	return brokerapi.Binding{}, errors.New("Broker does not support bind")
-}
-
-func (b *DeployerAccountBroker) Unbind(context context.Context, instanceID, bindingID string, details brokerapi.UnbindDetails) error {
-	return nil
-}
-
-func (b *DeployerAccountBroker) Update(context context.Context, instanceID string, details brokerapi.UpdateDetails, asyncAllowed bool) (brokerapi.UpdateServiceSpec, error) {
-	return brokerapi.UpdateServiceSpec{}, errors.New("Broker does not support update")
-}
-
-func (b *DeployerAccountBroker) LastOperation(context context.Context, instanceID, operationData string) (brokerapi.LastOperation, error) {
-	return brokerapi.LastOperation{}, errors.New("Broker does not support last operation")
 }

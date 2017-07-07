@@ -8,3 +8,5 @@ import:
   subpackages:
   - clientcredentials
 - package: github.com/cloudfoundry-community/go-cfclient
+- package: github.com/pkg/errors
+  version: ^0.8.0

@@ -17,45 +17,50 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
     $ cf create-service cloud-gov-service-account space-deployer my-service-account
     ```
 
-* Get dashboard link from service instance:
+* Create service key:
 
     ```bash
-    $ cf service my-service-account
-
-    Service instance: my-service-account
-    Service: cloud-gov-service-account
-    ...
-    Dashboard: https://fugacious.18f.gov/m/k3MtzJWVZaNlnjBYJ7FUdpW2ZkDvhmQz
+    $ cf create-service-key my-service-account my-service-key
     ```
 
-* Retrieve credentials from dashboard link.
-
-* To delete the account, delete the service instance:
+* Retrieve credentials from service key:
 
     ```bash
-    $ cf delete-service my-service-account
+    $ cf service-key my-service-account my-service-key
+    ```
+
+* To rotate or deprovision when user is no longer needed, delete the service key:
+
+    ```bash
+    $ cf delete-service-key my-service-account my-service-key
     ```
 
 ### UAA clients
 
-* First, create a service instance:
+* Create a service instance:
 
     ```bash
-    $ cf create-service cloud-gov-identity-provider oauth-client my-uaa-client \
-        -c '{"redirect_uri": ["https://my.app.cloud.gov/auth/callback"]}'
+    $ cf create-service cloud-gov-identity-provider oauth-client my-uaa-client
     ```
 
-* Second, retrieve your `client_id` and `client_secret` by visiting the
+* Create service key:
 dashboard link accessible via:
 
     ```bash
-    $ cf service my-uaa-client
+    $ cf create-service-key my-uaa-client my-service-key \
+        -c '{"redirect_uri": ["https://my.app.cloud.gov/auth/callback"]}'
     ```
 
-* When your service is no longer needed, deprovision by:
+* Retrieve credentials from service key:
 
     ```bash
-    $ cf delete-service my-uaa-client
+    $ cf service-key my-uaa-client my-service-key
+    ```
+
+* To rotate or deprovision when client is no longer needed, delete the service key:
+
+    ```bash
+    $ cf delete-service-key my-uaa-client my-service-key
     ```
 
 ## Deployment
