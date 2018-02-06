@@ -143,6 +143,11 @@ func (b *DeployerAccountBroker) Bind(
 	switch details.ServiceID {
 	case clientAccountGUID:
 		var opts BindOptions
+
+		if len(details.RawParameters) == 0 {
+			return brokerapi.Binding{}, errors.New(`Must pass JSON configuration with field "redirect_uri"`)
+		}
+
 		if err := json.Unmarshal(details.RawParameters, &opts); err != nil {
 			return brokerapi.Binding{}, err
 		}
