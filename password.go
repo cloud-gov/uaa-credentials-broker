@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"errors"
 )
 
 const (
@@ -14,25 +15,34 @@ const (
 
 type PasswordGenerator func(int) string
 
-func GenerateSecurePassword(n int) string {
-	for {
-		p, err := generatePassword(n)
-		if err != nil {
-			continue
-		}
-		if p.Password[0] != '-' &&
-			(p.Upper > 0 || p.Lower > 0 || p.Number > 0 || p.Special > 0) {
-			return p.Password
-		}
-	}
-}
-
 type password struct {
 	Password string
 	Upper    int
 	Lower    int
 	Number   int
 	Special  int
+}
+
+func GenerateSecurePassword(n int) string {
+	for {
+		p, err := generatePassword(n)
+		if err != nil {
+			continue
+		}
+
+		err = ValidatePassword(p)
+		if err == nil {
+			return p.Password
+		}
+	}
+}
+
+func ValidatePassword(p password) error {
+	if p.Password[0] != '-' &&
+		(p.Upper > 0 || p.Lower > 0 || p.Number > 0 || p.Special > 0) {
+		return nil
+	}
+	return errors.New("Invalid password")
 }
 
 func (p *password) AddChar(idx int) {
