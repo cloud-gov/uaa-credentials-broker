@@ -20,7 +20,8 @@ func GenerateSecurePassword(n int) string {
 		if err != nil {
 			continue
 		}
-		if p.Upper > 0 || p.Lower > 0 || p.Number > 0 || p.Special > 0 {
+		if p.Password[0] != '-' &&
+			(p.Upper > 0 || p.Lower > 0 || p.Number > 0 || p.Special > 0) {
 			return p.Password
 		}
 	}
