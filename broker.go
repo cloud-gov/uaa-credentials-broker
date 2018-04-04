@@ -90,10 +90,7 @@ func (b *DeployerAccountBroker) Provision(
 	details brokerapi.ProvisionDetails,
 	asyncAllowed bool,
 ) (brokerapi.ProvisionedServiceSpec, error) {
-	// TODO: Drop after 2017-07-12
-	return brokerapi.ProvisionedServiceSpec{
-		DashboardURL: "https://cloud.gov/updates/2017-07-05-changes-to-credentials-broker/",
-	}, nil
+	return brokerapi.ProvisionedServiceSpec{}, nil
 }
 
 func (b *DeployerAccountBroker) Deprovision(
