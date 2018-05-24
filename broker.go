@@ -28,7 +28,6 @@ var (
 	defaultScopes = []string{"openid"}
 	allowedScopes = map[string]bool{
 		"openid":                true,
-		"cloud_controller.read": true,
 	}
 )
 

@@ -153,7 +153,7 @@ var _ = Describe("broker", func() {
 				uaaClient.On("CreateClient", Client{
 					ID:                   "binding-guid",
 					AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
-					Scope:                []string{"openid", "cloud_controller.read"},
+					Scope:                []string{"openid"},
 					RedirectURI:          []string{"https://cloud.gov"},
 					ClientSecret:         "password",
 					AccessTokenValidity:  600,
@@ -167,7 +167,7 @@ var _ = Describe("broker", func() {
 					brokerapi.BindDetails{
 						AppGUID:       "app-guid",
 						ServiceID:     clientAccountGUID,
-						RawParameters: []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["openid", "cloud_controller.read"]}`),
+						RawParameters: []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["openid"]}`),
 					},
 				)
 				Expect(err).NotTo(HaveOccurred())
