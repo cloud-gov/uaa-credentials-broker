@@ -44,7 +44,6 @@ This service broker allows Cloud Foundry users to provision and deprovision UAA 
     ```
 
 * Create service key:
-dashboard link accessible via:
 
     ```bash
     $ cf create-service-key my-uaa-client my-service-key \
