@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/cloudfoundry-community/go-cfclient"
 	"log"
 	"net/http"
 	"os"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pivotal-cf/brokerapi"
 
@@ -48,7 +48,7 @@ func main() {
 	config := Config{}
 	err := envconfig.Process("", &config)
 	if err != nil {
-		log.Fatalf("", err)
+		log.Fatalf("%s", err)
 	}
 
 	client := NewClient(config)
@@ -59,7 +59,7 @@ func main() {
 		ClientSecret: config.UAAClientSecret,
 	})
 	if err != nil {
-		log.Fatalf("", err)
+		log.Fatalf("%s", err)
 	}
 
 	broker := DeployerAccountBroker{
