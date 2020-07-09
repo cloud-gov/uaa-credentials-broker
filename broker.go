@@ -1,15 +1,18 @@
 package main
 
 import (
+	"code.cloudfoundry.org/lager"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-
-	"code.cloudfoundry.org/lager"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pivotal-cf/brokerapi"
+
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type BindOptions struct {
@@ -27,49 +30,9 @@ var (
 var (
 	defaultScopes = []string{"openid"}
 	allowedScopes = map[string]bool{
-		"openid":                true,
+		"openid": true,
 	}
 )
-
-var catalog = []brokerapi.Service{
-	{
-		ID:          clientAccountGUID,
-		Name:        "cloud-gov-identity-provider",
-		Description: "Manage client credentials for authenticating cloud.gov users in your app",
-		Bindable:    true,
-		Plans: []brokerapi.ServicePlan{
-			{
-				ID:          "e6fd8aaa-b5ba-4b19-b52e-44c18ab8ca1d",
-				Name:        "oauth-client",
-				Description: "OAuth client credentials for authenticating cloud.gov users in your app",
-			},
-		},
-		Metadata: &brokerapi.ServiceMetadata{
-			DocumentationUrl: "https://cloud.gov/docs/services/cloud-gov-identity-provider/",
-		},
-	},
-	{
-		ID:          userAccountGUID,
-		Name:        "cloud-gov-service-account",
-		Description: "Manage cloud.gov service accounts with access to your organization",
-		Bindable:    true,
-		Plans: []brokerapi.ServicePlan{
-			{
-				ID:          deployerGUID,
-				Name:        "space-deployer",
-				Description: "A service account for continuous deployment, limited to a single space",
-			},
-			{
-				ID:          auditorGUID,
-				Name:        "space-auditor",
-				Description: "A service account for auditing configuration and monitoring events limited to a single space",
-			},
-		},
-		Metadata: &brokerapi.ServiceMetadata{
-			DocumentationUrl: "https://cloud.gov/docs/services/cloud-gov-service-account/",
-		},
-	},
-}
 
 type DeployerAccountBroker struct {
 	uaaClient        AuthClient
@@ -80,7 +43,19 @@ type DeployerAccountBroker struct {
 }
 
 func (b *DeployerAccountBroker) Services(context context.Context) []brokerapi.Service {
-	return catalog
+	var services []brokerapi.Service
+	pwd, _ := os.Getwd()
+
+	buf, err := ioutil.ReadFile(filepath.Join(pwd, "config.json"))
+	if err != nil {
+		b.logger.Error("services", err)
+		return []brokerapi.Service{}
+	}
+	err = json.Unmarshal(buf, &services)
+	if err != nil {
+		return []brokerapi.Service{}
+	}
+	return services
 }
 
 func (b *DeployerAccountBroker) Provision(
