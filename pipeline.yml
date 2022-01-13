@@ -266,6 +266,97 @@ jobs:
       USER_PLAN_NAME: space-deployer
       SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
 
+- name: push-broker-easta
+  serial_groups: [easta]
+  serial: true
+  plan:
+  - in_parallel:
+    - get: broker-src
+      passed: [acceptance-tests-staging]
+      trigger: true
+    - get: pipeline-tasks
+      passed: [push-broker-staging]
+  - put: broker-deploy-easta
+    params:
+      path: broker-src
+      manifest: broker-src/manifest.yml
+      environment_variables:
+        UAA_ADDRESS: ((uaa-address-easta))
+        UAA_CLIENT_ID: ((uaa-client-id-easta))
+        UAA_CLIENT_SECRET: ((uaa-client-secret-easta))
+        UAA_ZONE: ((uaa-zone-easta))
+        CF_ADDRESS: ((cf-api-url-easta))
+        BROKER_USERNAME: ((broker-username-easta))
+        BROKER_PASSWORD: ((broker-password-easta))
+        EMAIL_ADDRESS: ((email-address-easta))
+  - task: update-broker-identity-provider
+    file: pipeline-tasks/register-service-broker.yml
+    params:
+      CF_API_URL: ((cf-api-url-easta))
+      CF_USERNAME: ((cf-deploy-username-easta))
+      CF_PASSWORD: ((cf-deploy-password-easta))
+      CF_ORGANIZATION: ((cf-organization-easta))
+      CF_SPACE: ((cf-space-easta))
+      BROKER_NAME: uaa-credentials-broker
+      AUTH_USER: ((broker-username-easta))
+      AUTH_PASS: ((broker-password-easta))
+      SERVICES: cloud-gov-identity-provider
+  - task: update-broker-service-account
+    file: pipeline-tasks/register-service-broker.yml
+    params:
+      CF_API_URL: ((cf-api-url-easta))
+      CF_USERNAME: ((cf-deploy-username-easta))
+      CF_PASSWORD: ((cf-deploy-password-easta))
+      CF_ORGANIZATION: ((cf-organization-easta))
+      CF_SPACE: ((cf-space-easta))
+      BROKER_NAME: uaa-credentials-broker
+      AUTH_USER: ((broker-username-easta))
+      AUTH_PASS: ((broker-password-easta))
+      SERVICES: cloud-gov-service-account
+      SERVICE_ORGANIZATION_BLACKLIST: ((service-account-blacklist))
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-easta))
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-easta))
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+- name: acceptance-tests-easta
+  serial_groups: [easta]
+  serial: true
+  plan:
+  - get: broker-src
+    passed: [push-broker-easta]
+    trigger: true
+  - task: acceptance-tests-easta
+    file: broker-src/acceptance-tests.yml
+    params:
+      CF_API_URL: ((cf-api-url-easta))
+      CF_USERNAME: ((cf-deploy-username-test-easta))
+      CF_PASSWORD: ((cf-deploy-password-test-easta))
+      CF_ORGANIZATION: ((cf-organization-test-easta))
+      CF_SPACE: ((cf-space-test-easta))
+      UAA_API_URL: ((uaa-address-easta))
+      UAA_CLIENT_ID: ((uaa-client-id-test-easta))
+      UAA_CLIENT_SECRET: ((uaa-client-secret-test-easta))
+      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
+      USER_SERVICE_NAME: cloud-gov-service-account
+      CLIENT_PLAN_NAME: oauth-client
+      USER_PLAN_NAME: space-deployer
+      SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
+
 resources:
 - name: broker-src
   type: git
@@ -305,6 +396,15 @@ resources:
     password: ((cf-deploy-password-westb))
     organization: ((cf-organization-westb))
     space: ((cf-space-westb))
+
+- name: broker-deploy-easta
+  type: cf
+  source:
+    api: ((cf-api-url-easta))
+    username: ((cf-deploy-username-easta))
+    password: ((cf-deploy-password-easta))
+    organization: ((cf-organization-easta))
+    space: ((cf-space-easta))
 
 - name: slack
   type: slack-notification
