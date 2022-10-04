@@ -5,7 +5,7 @@ image_resource:
   type: docker-image
   source:
     repository: golang
-    tag: "1.12"
+    tag: "1.19"
 
 inputs:
 - name: broker-src
