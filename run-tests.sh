@@ -2,7 +2,7 @@
 
 set -e -x
 
-go install github.com/onsi/ginkgo/ginkgo
+go install github.com/onsi/ginkgo/ginkgo@latest
 
 pushd uaa-credentials-broker
 
