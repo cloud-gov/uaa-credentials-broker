@@ -2,7 +2,6 @@
 applications:
 - name: uaa-credentials-broker
   command: uaa-credentials-broker
-  stack: cflinuxfs4
   buildpacks:
   - https://github.com/cloudfoundry/go-buildpack
   env:
