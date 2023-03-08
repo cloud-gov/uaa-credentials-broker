@@ -544,9 +544,7 @@ resources:
   type: git
   source:
     uri: ((broker-git-url))
-      #branch: ((broker-git-branch))
-    branch: verify-cflinuxfs4
-
+    branch: ((broker-git-branch))
 
 - name: pipeline-tasks
   type: git
