@@ -1,11 +1,12 @@
 package main
 
 import (
-	"code.cloudfoundry.org/lager"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"code.cloudfoundry.org/lager"
 	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pivotal-cf/brokerapi"
 
@@ -18,6 +19,7 @@ import (
 type BindOptions struct {
 	RedirectURI []string `json:"redirect_uri"`
 	Scopes      []string `json:"scopes"`
+	AllowPublic *bool    `json:"allowpublic"`
 }
 
 var (
@@ -104,6 +106,24 @@ func (b *DeployerAccountBroker) Deprovision(
 	return brokerapi.DeprovisionServiceSpec{}, nil
 }
 
+func parseBindOptions(details brokerapi.BindDetails) (BindOptions, error) {
+	opts := BindOptions{}
+
+	if len(details.RawParameters) == 0 {
+		return opts, errors.New(`must pass JSON configuration with field "redirect_uri"`)
+	}
+
+	if err := json.Unmarshal(details.RawParameters, &opts); err != nil {
+		return opts, err
+	}
+
+	if len(opts.RedirectURI) == 0 {
+		return opts, errors.New(`must pass field "redirect_uri"`)
+	}
+
+	return opts, nil
+}
+
 func (b *DeployerAccountBroker) Bind(
 	context context.Context,
 	instanceID, bindingID string,
@@ -113,21 +133,12 @@ func (b *DeployerAccountBroker) Bind(
 
 	switch details.ServiceID {
 	case clientAccountGUID:
-		var opts BindOptions
-
-		if len(details.RawParameters) == 0 {
-			return brokerapi.Binding{}, errors.New(`Must pass JSON configuration with field "redirect_uri"`)
-		}
-
-		if err := json.Unmarshal(details.RawParameters, &opts); err != nil {
+		opts, err := parseBindOptions(details)
+		if err != nil {
 			return brokerapi.Binding{}, err
 		}
 
-		if len(opts.RedirectURI) == 0 {
-			return brokerapi.Binding{}, errors.New(`Must pass field "redirect_uri"`)
-		}
-
-		if _, err := b.provisionClient(bindingID, password, opts.RedirectURI, opts.Scopes); err != nil {
+		if _, err := b.provisionClient(bindingID, password, opts); err != nil {
 			return brokerapi.Binding{}, err
 		}
 
@@ -228,8 +239,13 @@ func (b *DeployerAccountBroker) LastOperation(context context.Context, instanceI
 	return brokerapi.LastOperation{}, errors.New("Broker does not support last operation")
 }
 
-func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, redirectURI []string, scopes []string) (Client, error) {
-	if len(scopes) == 0 {
+func (b *DeployerAccountBroker) provisionClient(
+	clientID,
+	clientSecret string,
+	opts BindOptions,
+) (Client, error) {
+	var scopes = opts.Scopes
+	if len(opts.Scopes) == 0 {
 		scopes = defaultScopes
 	}
 	forbiddenScopes := []string{}
@@ -242,15 +258,21 @@ func (b *DeployerAccountBroker) provisionClient(clientID, clientSecret string, r
 		return Client{}, fmt.Errorf("Scope(s) not permitted: %s", strings.Join(forbiddenScopes, ", "))
 	}
 
-	return b.uaaClient.CreateClient(Client{
+	client := Client{
 		ID:                   clientID,
 		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
 		Scope:                scopes,
-		RedirectURI:          redirectURI,
+		RedirectURI:          opts.RedirectURI,
 		ClientSecret:         clientSecret,
 		AccessTokenValidity:  b.config.AccessTokenValidity,
 		RefreshTokenValidity: b.config.RefreshTokenValidity,
-	})
+	}
+
+	if opts.AllowPublic != nil {
+		client.AllowPublic = *opts.AllowPublic
+	}
+
+	return b.uaaClient.CreateClient(client)
 }
 
 func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {

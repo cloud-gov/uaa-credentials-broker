@@ -73,6 +73,59 @@ var _ = Describe("broker", func() {
 	})
 
 	Describe("uaa client", func() {
+		Describe("parse options", func() {
+			It("returns error options when no parameters are specified", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(``),
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{}))
+			})
+
+			It("returns error options when no redirect URI specified", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":[]}`),
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{},
+				}))
+			})
+
+			It("returns options with redirect URI", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":["example.com"]}`),
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{"example.com"},
+				}))
+			})
+
+			It("returns options with scopes", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":["example.com"], "scopes":["scope1"]}`),
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{"example.com"},
+					Scopes:      []string{"scope1"},
+				}))
+			})
+
+			It("returns options with allowpublic", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":["example.com"], "allowpublic": true}`),
+				})
+				Expect(err).NotTo(HaveOccurred())
+				allowPublicTrue := true
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{"example.com"},
+					AllowPublic: &allowPublicTrue,
+				}))
+			})
+		})
+
 		Describe("provision", func() {
 			It("returns a binding", func() {
 				uaaClient.On("CreateClient", Client{
@@ -121,7 +174,7 @@ var _ = Describe("broker", func() {
 					},
 				)
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal(`Must pass JSON configuration with field "redirect_uri"`))
+				Expect(err.Error()).To(Equal(`must pass JSON configuration with field "redirect_uri"`))
 			})
 
 			It("errors if params incomplete", func() {
@@ -146,7 +199,7 @@ var _ = Describe("broker", func() {
 					},
 				)
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal(`Must pass field "redirect_uri"`))
+				Expect(err.Error()).To(Equal(`must pass field "redirect_uri"`))
 			})
 
 			It("accepts allowed scopes", func() {
@@ -188,6 +241,33 @@ var _ = Describe("broker", func() {
 				)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("Scope(s) not permitted: cloud_controller.write"))
+			})
+
+			It("uses specified allowpublic value", func() {
+				uaaClient.On("CreateClient", Client{
+					ID:                   "binding-guid",
+					AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
+					Scope:                []string{"openid"},
+					RedirectURI:          []string{"https://cloud.gov"},
+					ClientSecret:         "password",
+					AccessTokenValidity:  600,
+					RefreshTokenValidity: 86400,
+					AllowPublic:          true,
+				}).Return(Client{ID: "client-guid"}, nil)
+
+				_, err := broker.Bind(
+					context.Background(),
+					"instance-guid",
+					"binding-guid",
+					brokerapi.BindDetails{
+						AppGUID:       "app-guid",
+						ServiceID:     clientAccountGUID,
+						RawParameters: []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["openid"], "allowpublic": true}`),
+					},
+				)
+				Expect(err).NotTo(HaveOccurred())
+				cfClient.AssertExpectations(GinkgoT())
+				uaaClient.AssertExpectations(GinkgoT())
 			})
 		})
 

@@ -78,12 +78,20 @@ fi
 cf create-service "${CLIENT_SERVICE_NAME}" "${CLIENT_PLAN_NAME}" "${SERVICE_INSTANCE_NAME}"
 cf create-service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME}" -c '{"redirect_uri": ["https://cloud.gov"]}'
 cf create-service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_B}" -c '{"redirect_uri": ["https://cloud.gov"]}'
+
+SERVICE_KEY_NAME_ALLOWPUBLIC="${SERVICE_KEY_NAME_ALLOWPUBLIC:-creds_allowpublic}"
+cf create-service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_ALLOWPUBLIC}" \
+  -c '{"redirect_uri": ["https://cloud.gov"], "allowpublic": true}'
+
 key=$(cf service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME}" | tail -n +2)
 key_b=$(cf service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_B}" | tail -n +2)
+allowpublic_key=$(cf service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_ALLOWPUBLIC}" | tail -n +2)
 client_id=$(echo "${key}" | jq -r ".client_id")
 client_id_b=$(echo "${key_b}" | jq -r ".client_id")
+client_id_allowpublic=$(echo "${allowpublic_key}" | jq -r ".client_id")
 binding_guid=$(cf service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME}" --guid)
 binding_guid_b=$(cf service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_B}" --guid)
+binding_guid_allowpublic=$(cf service-key "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_ALLOWPUBLIC}" --guid)
 
 if [ "${binding_guid}" != "${client_id}" ]; then
   echo "Incorrect client id ${client_id}; expected ${binding_guid}"
@@ -93,23 +101,35 @@ if [ "${binding_guid_b}" != "${client_id_b}" ]; then
   echo "Incorrect client id ${client_id_b}; expected ${binding_guid_b}"
 fi
 
-# User exists in UAA
+if [ "${binding_guid_allowpublic}" != "${client_id_allowpublic}" ]; then
+  echo "Incorrect client id ${client_id_allowpublic}; expected ${binding_guid_allowpublic}"
+fi
+
+# Client exists in UAA
 uaac client get "${binding_guid}"
 uaac client get "${binding_guid_b}"
+
+# Check that allowpublic is set on client
+uaac client get "${binding_guid_allowpublic}" | grep "allowpublic"
 
 # Delete service instance
 cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME}"
 cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_B}"
 cf delete-service -f "${SERVICE_INSTANCE_NAME}"
 
-# User does not exist in UAA
+# Client does not exist in UAA
 if uaac client get "${binding_guid}"; then
-  echo "Unexpectedly found user ${binding_guid} in UAA"
+  echo "Unexpectedly found client ${binding_guid} in UAA"
   exit 1
 fi
 
 if uaac client get "${binding_guid_b}"; then
-  echo "Unexpectedly found user ${binding_guid_b} in UAA"
+  echo "Unexpectedly found client ${binding_guid_b} in UAA"
+  exit 1
+fi
+
+if uaac client get "${binding_guid_allowpublic}"; then
+  echo "Unexpectedly found client ${binding_guid_allowpublic} in UAA"
   exit 1
 fi
 
@@ -117,6 +137,7 @@ fi
 teardown() {
   cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME}" || true
   cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_B}" || true
+  cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_ALLOWPUBLIC}" || true
   cf delete-service -f "${SERVICE_INSTANCE_NAME}" || true
 }
 trap teardown EXIT
