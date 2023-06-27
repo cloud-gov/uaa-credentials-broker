@@ -36,7 +36,7 @@ type Client struct {
 	Active               bool     `json:"active,omitempty"`
 	AccessTokenValidity  int      `json:"access_token_validity,omitempty"`
 	RefreshTokenValidity int      `json:"refresh_token_validity,omitempty"`
-	AllowPublic          bool     `json:"allow_public,omitempty"`
+	AllowPublic          bool     `json:"allowpublic,omitempty"`
 }
 
 type Email struct {
