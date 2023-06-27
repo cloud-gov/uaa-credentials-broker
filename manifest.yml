@@ -3,6 +3,6 @@ applications:
 - name: uaa-credentials-broker
   command: uaa-credentials-broker
   buildpacks:
-  - https://github.com/cloudfoundry/go-buildpack#v1.8.40
+  - https://github.com/cloudfoundry/go-buildpack
   env:
-    GOVERSION: go1.12
+    GOVERSION: go1.20
