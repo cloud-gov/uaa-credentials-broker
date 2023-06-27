@@ -26,6 +26,13 @@ jobs:
         status: failure
         context: run-tests
 
+- name: reconfigure
+  plan:
+  - get: broker-src
+    trigger: true
+  - set_pipeline: deploy-uaa-credentials-broker
+    file: broker-src/pipeline.yml
+
 - name: push-broker-staging
   serial_groups: [staging]
   serial: true
@@ -33,6 +40,7 @@ jobs:
   - in_parallel:
     - get: broker-src
       trigger: true
+      passed: [reconfigure]
     - get: pipeline-tasks
   - put: broker-deploy-staging
     params:
