@@ -19,7 +19,7 @@ import (
 type BindOptions struct {
 	RedirectURI []string `json:"redirect_uri"`
 	Scopes      []string `json:"scopes"`
-	AllowPublic *bool    `json:"allow_public"`
+	AllowPublic *bool    `json:"allowpublic"`
 }
 
 var (

@@ -115,7 +115,7 @@ var _ = Describe("broker", func() {
 
 			It("returns options with allowpublic", func() {
 				options, err := parseBindOptions(brokerapi.BindDetails{
-					RawParameters: []byte(`{"redirect_uri":["example.com"], "allow_public": true}`),
+					RawParameters: []byte(`{"redirect_uri":["example.com"], "allowpublic": true}`),
 				})
 				Expect(err).NotTo(HaveOccurred())
 				allowPublicTrue := true
@@ -262,7 +262,7 @@ var _ = Describe("broker", func() {
 					brokerapi.BindDetails{
 						AppGUID:       "app-guid",
 						ServiceID:     clientAccountGUID,
-						RawParameters: []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["openid"], "allow_public": true}`),
+						RawParameters: []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["openid"], "allowpublic": true}`),
 					},
 				)
 				Expect(err).NotTo(HaveOccurred())
