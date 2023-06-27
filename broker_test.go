@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"reflect"
-	"testing"
 
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/cloudfoundry-community/go-cfclient"
@@ -75,6 +73,59 @@ var _ = Describe("broker", func() {
 	})
 
 	Describe("uaa client", func() {
+		Describe("parse options", func() {
+			It("returns error options when no parameters are specified", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(``),
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{}))
+			})
+
+			It("returns error options when no redirect URI specified", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":[]}`),
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{},
+				}))
+			})
+
+			It("returns options with redirect URI", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":["example.com"]}`),
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{"example.com"},
+				}))
+			})
+
+			It("returns options with scopes", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":["example.com"], "scopes":["scope1"]}`),
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{"example.com"},
+					Scopes:      []string{"scope1"},
+				}))
+			})
+
+			It("returns options with allowpublic", func() {
+				options, err := parseBindOptions(brokerapi.BindDetails{
+					RawParameters: []byte(`{"redirect_uri":["example.com"], "allow_public": true}`),
+				})
+				Expect(err).NotTo(HaveOccurred())
+				allowPublicTrue := true
+				Expect(options).To(Equal(BindOptions{
+					RedirectURI: []string{"example.com"},
+					AllowPublic: &allowPublicTrue,
+				}))
+			})
+		})
+
 		Describe("provision", func() {
 			It("returns a binding", func() {
 				uaaClient.On("CreateClient", Client{
@@ -322,67 +373,3 @@ var _ = Describe("broker", func() {
 		})
 	})
 })
-
-func TestParseBindOptions(t *testing.T) {
-	allowpublicTrue := true
-	testCases := map[string]struct {
-		bindDetails     brokerapi.BindDetails
-		expectedOptions BindOptions
-		expectErr       bool
-	}{
-		"no input": {
-			bindDetails: brokerapi.BindDetails{
-				RawParameters: []byte(``),
-			},
-			expectedOptions: BindOptions{},
-			expectErr:       true,
-		},
-		"no redirect uri specified": {
-			bindDetails: brokerapi.BindDetails{
-				RawParameters: []byte(`{"redirect_uri":[]}`),
-			},
-			expectedOptions: BindOptions{
-				RedirectURI: []string{},
-			},
-			expectErr: true,
-		},
-		"specify redirect URI": {
-			bindDetails: brokerapi.BindDetails{
-				RawParameters: []byte(`{"redirect_uri":["example.com"]}`),
-			},
-			expectedOptions: BindOptions{
-				RedirectURI: []string{"example.com"},
-			},
-		},
-		"specify scopes": {
-			bindDetails: brokerapi.BindDetails{
-				RawParameters: []byte(`{"redirect_uri":["example.com"], "scopes":["scope1"]}`),
-			},
-			expectedOptions: BindOptions{
-				RedirectURI: []string{"example.com"},
-				Scopes:      []string{"scope1"},
-			},
-		},
-		"specify allowpublic": {
-			bindDetails: brokerapi.BindDetails{
-				RawParameters: []byte(`{"redirect_uri":["example.com"], "allow_public": true}`),
-			},
-			expectedOptions: BindOptions{
-				RedirectURI: []string{"example.com"},
-				AllowPublic: &allowpublicTrue,
-			},
-		},
-	}
-
-	for name, test := range testCases {
-		t.Run(name, func(t *testing.T) {
-			options, err := parseBindOptions(test.bindDetails)
-			if err != nil && !test.expectErr {
-				t.Fatalf("unexpected error: %s", err)
-			}
-			if !reflect.DeepEqual(test.expectedOptions, options) {
-				t.Errorf("expected: %#v, got: %#v", test.expectedOptions, options)
-			}
-		})
-	}
-}
