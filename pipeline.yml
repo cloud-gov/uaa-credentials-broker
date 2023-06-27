@@ -2,10 +2,29 @@
 jobs:
 - name: test-broker
   plan:
-  - get: broker-src
+  - get: pull-request
+    version: every
     trigger: true
+  - get: broker-src
+  - put: pull-request
+    params:
+      path: pull-request
+      status: pending
+      context: run-tests
   - task: run-tests
     file: broker-src/run-tests.yml
+    on_success:
+      put: pull-request
+      params:
+        path: pull-request
+        status: success
+        context: run-tests
+    on_failure:
+      put: pull-request
+      params:
+        path: pull-request
+        status: failure
+        context: run-tests
 
 - name: push-broker-staging
   serial_groups: [staging]
@@ -175,370 +194,6 @@ jobs:
       USER_PLAN_NAME: space-deployer
       SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
 
-- name: push-broker-westb
-  serial_groups: [westb]
-  serial: true
-  plan:
-  - in_parallel:
-    - get: broker-src
-      passed: [acceptance-tests-staging]
-      trigger: true
-    - get: pipeline-tasks
-      passed: [push-broker-staging]
-  - put: broker-deploy-westb
-    params:
-      path: broker-src
-      manifest: broker-src/manifest.yml
-      environment_variables:
-        UAA_ADDRESS: ((uaa-address-westb))
-        UAA_CLIENT_ID: ((uaa-client-id-westb))
-        UAA_CLIENT_SECRET: ((uaa-client-secret-westb))
-        UAA_ZONE: ((uaa-zone-westb))
-        CF_ADDRESS: ((cf-api-url-westb))
-        BROKER_USERNAME: ((broker-username-westb))
-        BROKER_PASSWORD: ((broker-password-westb))
-        EMAIL_ADDRESS: ((email-address-westb))
-  - task: update-broker-identity-provider
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-westb))
-      CF_USERNAME: ((cf-deploy-username-westb))
-      CF_PASSWORD: ((cf-deploy-password-westb))
-      CF_ORGANIZATION: ((cf-organization-westb))
-      CF_SPACE: ((cf-space-westb))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-westb))
-      AUTH_PASS: ((broker-password-westb))
-      SERVICES: cloud-gov-identity-provider
-  - task: update-broker-service-account
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-westb))
-      CF_USERNAME: ((cf-deploy-username-westb))
-      CF_PASSWORD: ((cf-deploy-password-westb))
-      CF_ORGANIZATION: ((cf-organization-westb))
-      CF_SPACE: ((cf-space-westb))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-westb))
-      AUTH_PASS: ((broker-password-westb))
-      SERVICES: cloud-gov-service-account
-      SERVICE_ORGANIZATION_BLACKLIST: ((service-account-blacklist))
-  on_failure:
-    put: slack
-    params:
-      text: |
-        :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-westb))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-  on_success:
-    put: slack
-    params:
-      text: |
-        :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-westb))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-
-- name: acceptance-tests-westb
-  serial_groups: [westb]
-  serial: true
-  plan:
-  - get: broker-src
-    passed: [push-broker-westb]
-    trigger: true
-  - task: acceptance-tests-westb
-    file: broker-src/acceptance-tests.yml
-    params:
-      CF_API_URL: ((cf-api-url-westb))
-      CF_USERNAME: ((cf-deploy-username-test-westb))
-      CF_PASSWORD: ((cf-deploy-password-test-westb))
-      CF_ORGANIZATION: ((cf-organization-test-westb))
-      CF_SPACE: ((cf-space-test-westb))
-      UAA_API_URL: ((uaa-address-westb))
-      UAA_CLIENT_ID: ((uaa-client-id-test-westb))
-      UAA_CLIENT_SECRET: ((uaa-client-secret-test-westb))
-      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
-      USER_SERVICE_NAME: cloud-gov-service-account
-      CLIENT_PLAN_NAME: oauth-client
-      USER_PLAN_NAME: space-deployer
-      SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
-
-- name: push-broker-easta
-  serial_groups: [easta]
-  serial: true
-  plan:
-  - in_parallel:
-    - get: broker-src
-      passed: [acceptance-tests-staging]
-      trigger: true
-    - get: pipeline-tasks
-      passed: [push-broker-staging]
-  - put: broker-deploy-easta
-    params:
-      path: broker-src
-      manifest: broker-src/manifest.yml
-      environment_variables:
-        UAA_ADDRESS: ((uaa-address-easta))
-        UAA_CLIENT_ID: ((uaa-client-id-easta))
-        UAA_CLIENT_SECRET: ((uaa-client-secret-easta))
-        UAA_ZONE: ((uaa-zone-easta))
-        CF_ADDRESS: ((cf-api-url-easta))
-        BROKER_USERNAME: ((broker-username-easta))
-        BROKER_PASSWORD: ((broker-password-easta))
-        EMAIL_ADDRESS: ((email-address-easta))
-  - task: update-broker-identity-provider
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-easta))
-      CF_USERNAME: ((cf-deploy-username-easta))
-      CF_PASSWORD: ((cf-deploy-password-easta))
-      CF_ORGANIZATION: ((cf-organization-easta))
-      CF_SPACE: ((cf-space-easta))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-easta))
-      AUTH_PASS: ((broker-password-easta))
-      SERVICES: cloud-gov-identity-provider
-  - task: update-broker-service-account
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-easta))
-      CF_USERNAME: ((cf-deploy-username-easta))
-      CF_PASSWORD: ((cf-deploy-password-easta))
-      CF_ORGANIZATION: ((cf-organization-easta))
-      CF_SPACE: ((cf-space-easta))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-easta))
-      AUTH_PASS: ((broker-password-easta))
-      SERVICES: cloud-gov-service-account
-      SERVICE_ORGANIZATION_BLACKLIST: ((service-account-blacklist))
-  on_failure:
-    put: slack
-    params:
-      text: |
-        :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-easta))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-  on_success:
-    put: slack
-    params:
-      text: |
-        :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-easta))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-
-- name: acceptance-tests-easta
-  serial_groups: [easta]
-  serial: true
-  plan:
-  - get: broker-src
-    passed: [push-broker-easta]
-    trigger: true
-  - task: acceptance-tests-easta
-    file: broker-src/acceptance-tests.yml
-    params:
-      CF_API_URL: ((cf-api-url-easta))
-      CF_USERNAME: ((cf-deploy-username-test-easta))
-      CF_PASSWORD: ((cf-deploy-password-test-easta))
-      CF_ORGANIZATION: ((cf-organization-test-easta))
-      CF_SPACE: ((cf-space-test-easta))
-      UAA_API_URL: ((uaa-address-easta))
-      UAA_CLIENT_ID: ((uaa-client-id-test-easta))
-      UAA_CLIENT_SECRET: ((uaa-client-secret-test-easta))
-      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
-      USER_SERVICE_NAME: cloud-gov-service-account
-      CLIENT_PLAN_NAME: oauth-client
-      USER_PLAN_NAME: space-deployer
-      SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
-
-- name: push-broker-westc
-  serial_groups: [westc]
-  serial: true
-  plan:
-  - in_parallel:
-    - get: broker-src
-      passed: [acceptance-tests-staging]
-      trigger: true
-    - get: pipeline-tasks
-      passed: [push-broker-staging]
-  - put: broker-deploy-westc
-    params:
-      path: broker-src
-      manifest: broker-src/manifest.yml
-      environment_variables:
-        UAA_ADDRESS: ((uaa-address-westc))
-        UAA_CLIENT_ID: ((uaa-client-id-westc))
-        UAA_CLIENT_SECRET: ((uaa-client-secret-westc))
-        UAA_ZONE: ((uaa-zone-westc))
-        CF_ADDRESS: ((cf-api-url-westc))
-        BROKER_USERNAME: ((broker-username-westc))
-        BROKER_PASSWORD: ((broker-password-westc))
-        EMAIL_ADDRESS: ((email-address-westc))
-  - task: update-broker-identity-provider
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-westc))
-      CF_USERNAME: ((cf-deploy-username-westc))
-      CF_PASSWORD: ((cf-deploy-password-westc))
-      CF_ORGANIZATION: ((cf-organization-westc))
-      CF_SPACE: ((cf-space-westc))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-westc))
-      AUTH_PASS: ((broker-password-westc))
-      SERVICES: cloud-gov-identity-provider
-  - task: update-broker-service-account
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-westc))
-      CF_USERNAME: ((cf-deploy-username-westc))
-      CF_PASSWORD: ((cf-deploy-password-westc))
-      CF_ORGANIZATION: ((cf-organization-westc))
-      CF_SPACE: ((cf-space-westc))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-westc))
-      AUTH_PASS: ((broker-password-westc))
-      SERVICES: cloud-gov-service-account
-      SERVICE_ORGANIZATION_BLACKLIST: ((service-account-blacklist))
-  on_failure:
-    put: slack
-    params:
-      text: |
-        :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-westc))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-  on_success:
-    put: slack
-    params:
-      text: |
-        :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-westc))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-
-- name: acceptance-tests-westc
-  serial_groups: [westc]
-  serial: true
-  plan:
-  - get: broker-src
-    passed: [push-broker-westc]
-    trigger: true
-  - task: acceptance-tests-westc
-    file: broker-src/acceptance-tests.yml
-    params:
-      CF_API_URL: ((cf-api-url-westc))
-      CF_USERNAME: ((cf-deploy-username-test-westc))
-      CF_PASSWORD: ((cf-deploy-password-test-westc))
-      CF_ORGANIZATION: ((cf-organization-test-westc))
-      CF_SPACE: ((cf-space-test-westc))
-      UAA_API_URL: ((uaa-address-westc))
-      UAA_CLIENT_ID: ((uaa-client-id-test-westc))
-      UAA_CLIENT_SECRET: ((uaa-client-secret-test-westc))
-      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
-      USER_SERVICE_NAME: cloud-gov-service-account
-      CLIENT_PLAN_NAME: oauth-client
-      USER_PLAN_NAME: space-deployer
-      SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
-
-- name: push-broker-eastb
-  serial_groups: [eastb]
-  serial: true
-  plan:
-  - in_parallel:
-    - get: broker-src
-      passed: [acceptance-tests-staging]
-      trigger: true
-    - get: pipeline-tasks
-      passed: [push-broker-staging]
-  - put: broker-deploy-eastb
-    params:
-      path: broker-src
-      manifest: broker-src/manifest.yml
-      environment_variables:
-        UAA_ADDRESS: ((uaa-address-eastb))
-        UAA_CLIENT_ID: ((uaa-client-id-eastb))
-        UAA_CLIENT_SECRET: ((uaa-client-secret-eastb))
-        UAA_ZONE: ((uaa-zone-eastb))
-        CF_ADDRESS: ((cf-api-url-eastb))
-        BROKER_USERNAME: ((broker-username-eastb))
-        BROKER_PASSWORD: ((broker-password-eastb))
-        EMAIL_ADDRESS: ((email-address-eastb))
-  - task: update-broker-identity-provider
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-eastb))
-      CF_USERNAME: ((cf-deploy-username-eastb))
-      CF_PASSWORD: ((cf-deploy-password-eastb))
-      CF_ORGANIZATION: ((cf-organization-eastb))
-      CF_SPACE: ((cf-space-eastb))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-eastb))
-      AUTH_PASS: ((broker-password-eastb))
-      SERVICES: cloud-gov-identity-provider
-  - task: update-broker-service-account
-    file: pipeline-tasks/register-service-broker.yml
-    params:
-      CF_API_URL: ((cf-api-url-eastb))
-      CF_USERNAME: ((cf-deploy-username-eastb))
-      CF_PASSWORD: ((cf-deploy-password-eastb))
-      CF_ORGANIZATION: ((cf-organization-eastb))
-      CF_SPACE: ((cf-space-eastb))
-      BROKER_NAME: uaa-credentials-broker
-      AUTH_USER: ((broker-username-eastb))
-      AUTH_PASS: ((broker-password-eastb))
-      SERVICES: cloud-gov-service-account
-      SERVICE_ORGANIZATION_BLACKLIST: ((service-account-blacklist))
-  on_failure:
-    put: slack
-    params:
-      text: |
-        :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-eastb))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-  on_success:
-    put: slack
-    params:
-      text: |
-        :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-eastb))
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-
-- name: acceptance-tests-eastb
-  serial_groups: [eastb]
-  serial: true
-  plan:
-  - get: broker-src
-    passed: [push-broker-eastb]
-    trigger: true
-  - task: acceptance-tests-eastb
-    file: broker-src/acceptance-tests.yml
-    params:
-      CF_API_URL: ((cf-api-url-eastb))
-      CF_USERNAME: ((cf-deploy-username-test-eastb))
-      CF_PASSWORD: ((cf-deploy-password-test-eastb))
-      CF_ORGANIZATION: ((cf-organization-test-eastb))
-      CF_SPACE: ((cf-space-test-eastb))
-      UAA_API_URL: ((uaa-address-eastb))
-      UAA_CLIENT_ID: ((uaa-client-id-test-eastb))
-      UAA_CLIENT_SECRET: ((uaa-client-secret-test-eastb))
-      CLIENT_SERVICE_NAME: cloud-gov-identity-provider
-      USER_SERVICE_NAME: cloud-gov-service-account
-      CLIENT_PLAN_NAME: oauth-client
-      USER_PLAN_NAME: space-deployer
-      SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
-
 resources:
 - name: broker-src
   type: git
@@ -571,49 +226,26 @@ resources:
     organization: ((cf-organization-production))
     space: ((cf-space-production))
 
-- name: broker-deploy-westb
-  type: cf
-  source:
-    api: ((cf-api-url-westb))
-    username: ((cf-deploy-username-westb))
-    password: ((cf-deploy-password-westb))
-    organization: ((cf-organization-westb))
-    space: ((cf-space-westb))
-
-- name: broker-deploy-easta
-  type: cf
-  source:
-    api: ((cf-api-url-easta))
-    username: ((cf-deploy-username-easta))
-    password: ((cf-deploy-password-easta))
-    organization: ((cf-organization-easta))
-    space: ((cf-space-easta))
-
-- name: broker-deploy-westc
-  type: cf
-  source:
-    api: ((cf-api-url-westc))
-    username: ((cf-deploy-username-westc))
-    password: ((cf-deploy-password-westc))
-    organization: ((cf-organization-westc))
-    space: ((cf-space-westc))
-
-- name: broker-deploy-eastb
-  type: cf
-  source:
-    api: ((cf-api-url-eastb))
-    username: ((cf-deploy-username-eastb))
-    password: ((cf-deploy-password-eastb))
-    organization: ((cf-organization-eastb))
-    space: ((cf-space-eastb))
-
 - name: slack
   type: slack-notification
   source:
     url: ((slack-webhook-url))
+
+- name: pull-request
+  type: pull-request
+  check_every: 1m
+  source:
+    repository: cloud-gov/uaa-credentials-broker
+    access_token: ((ci-bot-status-access-token))
+    disable_forks: true
 
 resource_types:
 - name: slack-notification
   type: docker-image
   source:
     repository: cfcommunity/slack-notification-resource
+
+- name: pull-request
+  type: docker-image
+  source:
+    repository: teliaoss/github-pr-resource
