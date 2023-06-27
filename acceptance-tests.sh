@@ -115,6 +115,7 @@ uaac client get "${binding_guid_allowpublic}" | grep "allowpublic"
 # Delete service instance
 cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME}"
 cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_B}"
+cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_ALLOWPUBLIC}"
 cf delete-service -f "${SERVICE_INSTANCE_NAME}"
 
 # Client does not exist in UAA
