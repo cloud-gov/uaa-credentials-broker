@@ -32,7 +32,6 @@ jobs:
   plan:
   - in_parallel:
     - get: broker-src
-      passed: [test-broker]
       trigger: true
     - get: pipeline-tasks
   - put: broker-deploy-staging
@@ -66,7 +65,7 @@ jobs:
       text: |
         :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-staging))
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
+      channel: ((slack-failure-channel))
       username: ((slack-username))
       icon_url: ((slack-icon-url))
   on_success:
@@ -75,7 +74,7 @@ jobs:
       text: |
         :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-staging))
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
+      channel: ((slack-success-channel))
       username: ((slack-username))
       icon_url: ((slack-icon-url))
 
@@ -157,7 +156,7 @@ jobs:
       text: |
         :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-production))
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
+      channel: ((slack-failure-channel))
       username: ((slack-username))
       icon_url: ((slack-icon-url))
   on_success:
@@ -166,7 +165,7 @@ jobs:
       text: |
         :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-production))
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-channel))
+      channel: ((slack-success-channel))
       username: ((slack-username))
       icon_url: ((slack-icon-url))
 
@@ -198,14 +197,14 @@ resources:
 - name: broker-src
   type: git
   source:
-    uri: ((broker-git-url))
-    branch: ((broker-git-branch))
+    uri: https://github.com/cloudfoundry-community/uaa-credentials-broker
+    branch: main
 
 - name: pipeline-tasks
   type: git
   source:
-    uri: ((pipeline-tasks-git-url))
-    branch: ((pipeline-tasks-git-branch))
+    uri: https://github.com/cloud-gov/cg-pipeline-tasks
+    branch: main
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
 - name: broker-deploy-staging
@@ -236,7 +235,7 @@ resources:
   check_every: 1m
   source:
     repository: cloud-gov/uaa-credentials-broker
-    access_token: ((ci-bot-status-access-token))
+    access_token: ((status-access-token))
     disable_forks: true
 
 resource_types:
