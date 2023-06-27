@@ -93,7 +93,7 @@ if [ "${binding_guid_b}" != "${client_id_b}" ]; then
   echo "Incorrect client id ${client_id_b}; expected ${binding_guid_b}"
 fi
 
-# User exists in UAA
+# Client exists in UAA
 uaac client get "${binding_guid}"
 uaac client get "${binding_guid_b}"
 
@@ -102,14 +102,14 @@ cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME}"
 cf delete-service-key -f "${SERVICE_INSTANCE_NAME}" "${SERVICE_KEY_NAME_B}"
 cf delete-service -f "${SERVICE_INSTANCE_NAME}"
 
-# User does not exist in UAA
+# Client does not exist in UAA
 if uaac client get "${binding_guid}"; then
-  echo "Unexpectedly found user ${binding_guid} in UAA"
+  echo "Unexpectedly found client ${binding_guid} in UAA"
   exit 1
 fi
 
 if uaac client get "${binding_guid_b}"; then
-  echo "Unexpectedly found user ${binding_guid_b} in UAA"
+  echo "Unexpectedly found client ${binding_guid_b} in UAA"
   exit 1
 fi
 
