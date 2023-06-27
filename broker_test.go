@@ -123,7 +123,7 @@ var _ = Describe("broker", func() {
 					},
 				)
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal(`Must pass JSON configuration with field "redirect_uri"`))
+				Expect(err.Error()).To(Equal(`must pass JSON configuration with field "redirect_uri"`))
 			})
 
 			It("errors if params incomplete", func() {
@@ -148,7 +148,7 @@ var _ = Describe("broker", func() {
 					},
 				)
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal(`Must pass field "redirect_uri"`))
+				Expect(err.Error()).To(Equal(`must pass field "redirect_uri"`))
 			})
 
 			It("accepts allowed scopes", func() {
@@ -190,6 +190,33 @@ var _ = Describe("broker", func() {
 				)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("Scope(s) not permitted: cloud_controller.write"))
+			})
+
+			It("uses specified allowpublic value", func() {
+				uaaClient.On("CreateClient", Client{
+					ID:                   "binding-guid",
+					AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
+					Scope:                []string{"openid"},
+					RedirectURI:          []string{"https://cloud.gov"},
+					ClientSecret:         "password",
+					AccessTokenValidity:  600,
+					RefreshTokenValidity: 86400,
+					AllowPublic:          true,
+				}).Return(Client{ID: "client-guid"}, nil)
+
+				_, err := broker.Bind(
+					context.Background(),
+					"instance-guid",
+					"binding-guid",
+					brokerapi.BindDetails{
+						AppGUID:       "app-guid",
+						ServiceID:     clientAccountGUID,
+						RawParameters: []byte(`{"redirect_uri": ["https://cloud.gov"], "scopes": ["openid"], "allow_public": true}`),
+					},
+				)
+				Expect(err).NotTo(HaveOccurred())
+				cfClient.AssertExpectations(GinkgoT())
+				uaaClient.AssertExpectations(GinkgoT())
 			})
 		})
 

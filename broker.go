@@ -258,7 +258,7 @@ func (b *DeployerAccountBroker) provisionClient(
 		return Client{}, fmt.Errorf("Scope(s) not permitted: %s", strings.Join(forbiddenScopes, ", "))
 	}
 
-	return b.uaaClient.CreateClient(Client{
+	client := Client{
 		ID:                   clientID,
 		AuthorizedGrantTypes: []string{"authorization_code", "refresh_token"},
 		Scope:                scopes,
@@ -266,8 +266,13 @@ func (b *DeployerAccountBroker) provisionClient(
 		ClientSecret:         clientSecret,
 		AccessTokenValidity:  b.config.AccessTokenValidity,
 		RefreshTokenValidity: b.config.RefreshTokenValidity,
-		AllowPublic:          *opts.AllowPublic,
-	})
+	}
+
+	if opts.AllowPublic != nil {
+		client.AllowPublic = *opts.AllowPublic
+	}
+
+	return b.uaaClient.CreateClient(client)
 }
 
 func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {
