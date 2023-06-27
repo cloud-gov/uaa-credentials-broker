@@ -11,7 +11,7 @@ image_resource:
     tag: ((harden-concourse-task-tag))
 
 inputs:
-- name: broker-src
+- name: pull-request
   path: uaa-credentials-broker
 
 run:

@@ -12,7 +12,7 @@ jobs:
       status: pending
       context: run-tests
   - task: run-tests
-    file: broker-src/run-tests.yml
+    file: pull-request/run-tests.yml
     on_success:
       put: pull-request
       params:
