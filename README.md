@@ -5,7 +5,7 @@ Cloud Foundry UAA Credentials Broker
 This service broker allows Cloud Foundry users to provision and deprovision UAA users and clients:
 
 * UAA users managed by the broker are scoped to a given organization and space and can be used to push applications when password authentication is needed--such as when deploying from a continuous integration service. Live example: [the cloud.gov service account service](https://cloud.gov/docs/services/cloud-gov-service-account/).
-* UAA clients can be used to leverage UAA authentication in tenant applications. Live example: [leveraging cloud.gov authentication](https://cloud.gov/docs/apps/leveraging-authentication/) using the [cloud.gov identity provider service](https://cloud.gov/docs/services/cloud-gov-identity-provider/).
+* UAA clients can be used to leverage UAA authentication in tenant applications. Live example: [leveraging cloud.gov authentication](https://cloud.gov/docs/management/leveraging-authentication/) using the [cloud.gov identity provider service](https://cloud.gov/docs/services/cloud-gov-identity-provider/).
 
 ## Usage
 
