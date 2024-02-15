@@ -1,6 +1,6 @@
 Cloud Foundry UAA Credentials Broker
 =====================================
-[![Code Climate](https://codeclimate.com/github/cloudfoundry-community/uaa-credentials-broker/badges/gpa.svg)](https://codeclimate.com/github/cloudfoundry-community/uaa-credentials-broker)
+[![Code Climate](https://codeclimate.com/github/cloud-gov/uaa-credentials-broker/badges/gpa.svg)](https://codeclimate.com/github/cloud-gov/uaa-credentials-broker)
 
 This service broker allows Cloud Foundry users to provision and deprovision UAA users and clients:
 

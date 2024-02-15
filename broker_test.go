@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/cloudfoundry-community/uaa-credentials-broker/mocks"
+	"github.com/cloud-gov/uaa-credentials-broker/mocks"
 )
 
 type FakeUAAClient struct {
