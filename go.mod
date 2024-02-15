@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-community/uaa-credentials-broker
+module github.com/cloud-gov/uaa-credentials-broker
 
 go 1.19
 
