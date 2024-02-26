@@ -205,7 +205,7 @@ resources:
 - name: broker-src
   type: git
   source:
-    uri: https://github.com/cloudfoundry-community/uaa-credentials-broker
+    uri: https://github.com/cloud-gov/uaa-credentials-broker
     branch: main
 
 - name: pipeline-tasks
