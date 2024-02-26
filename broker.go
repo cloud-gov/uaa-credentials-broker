@@ -78,7 +78,11 @@ func (b *DeployerAccountBroker) Deprovision(
 	// Handle instances created before credential management was moved to bind and unbind
 	switch details.ServiceID {
 	case clientAccountGUID:
-		if err := b.uaaClient.DeleteClient(instanceID); err != nil && !strings.Contains(err.Error(), "404") {
+		if err := b.uaaClient.DeleteClient(instanceID); err != nil {
+			// allow 404 responses
+			if strings.Contains(err.Error(), "404") {
+				return brokerapi.DeprovisionServiceSpec{}, nil
+			}
 			return brokerapi.DeprovisionServiceSpec{}, err
 		}
 	case userAccountGUID:
