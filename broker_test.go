@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/cloudfoundry-community/go-cfclient"
@@ -27,8 +28,8 @@ func (c *FakeUAAClient) CreateClient(client Client) (Client, error) {
 }
 
 func (c *FakeUAAClient) DeleteClient(clientID string) error {
-	c.Called(clientID)
-	return nil
+	args := c.Called(clientID)
+	return args.Error(0)
 }
 
 func (c *FakeUAAClient) GetUser(userID string) (User, error) {
@@ -271,8 +272,8 @@ var _ = Describe("broker", func() {
 			})
 		})
 
-		Describe("deprovision", func() {
-			It("returns a deprovision service spec", func() {
+		Describe("unbind", func() {
+			It("does not return an error", func() {
 				uaaClient.On("DeleteClient", "binding-guid").Return(nil)
 
 				err := broker.Unbind(
@@ -286,6 +287,83 @@ var _ = Describe("broker", func() {
 				Expect(err).NotTo(HaveOccurred())
 				uaaClient.AssertExpectations(GinkgoT())
 			})
+
+			It("does not return an error for a 404 response on deletion", func() {
+				uaaClient.On("DeleteClient", "binding-guid2").Return(fmt.Errorf("Expected status 200; got: %d", 404))
+
+				err := broker.Unbind(
+					context.Background(),
+					"instance-guid",
+					"binding-guid2",
+					brokerapi.UnbindDetails{
+						ServiceID: clientAccountGUID,
+					},
+				)
+				Expect(err).NotTo(HaveOccurred())
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+
+			It("does return an error for a response other than 200/404 on deletion", func() {
+				uaaClient.On("DeleteClient", "binding-guid3").Return(fmt.Errorf("Expected status 200; got: %d", 500))
+
+				err := broker.Unbind(
+					context.Background(),
+					"instance-guid",
+					"binding-guid3",
+					brokerapi.UnbindDetails{
+						ServiceID: clientAccountGUID,
+					},
+				)
+				Expect(err).To(HaveOccurred())
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+		})
+
+		Describe("deprovision", func() {
+			It("does not return an error", func() {
+				uaaClient.On("DeleteClient", "instance-guid").Return(nil)
+
+				_, err := broker.Deprovision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.DeprovisionDetails{
+						ServiceID: clientAccountGUID,
+					},
+					false,
+				)
+				Expect(err).NotTo(HaveOccurred())
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+		})
+
+		It("does not return an error for a 404 response on deletion", func() {
+			uaaClient.On("DeleteClient", "instance-guid2").Return(fmt.Errorf("Expected status 200; got: %d", 404))
+
+			_, err := broker.Deprovision(
+				context.Background(),
+				"instance-guid2",
+				brokerapi.DeprovisionDetails{
+					ServiceID: clientAccountGUID,
+				},
+				false,
+			)
+			Expect(err).NotTo(HaveOccurred())
+			uaaClient.AssertExpectations(GinkgoT())
+		})
+
+		It("does return an error for a response other than 200/404 on deletion", func() {
+			uaaClient.On("DeleteClient", "instance-guid3").Return(fmt.Errorf("Expected status 200; got: %d", 500))
+
+			_, err := broker.Deprovision(
+				context.Background(),
+				"instance-guid3",
+				brokerapi.DeprovisionDetails{
+					ServiceID: clientAccountGUID,
+				},
+				false,
+			)
+			Expect(err).To(HaveOccurred())
+			uaaClient.AssertExpectations(GinkgoT())
 		})
 	})
 
