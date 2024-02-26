@@ -78,11 +78,7 @@ func (b *DeployerAccountBroker) Deprovision(
 	// Handle instances created before credential management was moved to bind and unbind
 	switch details.ServiceID {
 	case clientAccountGUID:
-		if err := b.uaaClient.DeleteClient(instanceID); err != nil {
-			// allow 404 responses
-			if strings.Contains(err.Error(), "404") {
-				return brokerapi.DeprovisionServiceSpec{}, nil
-			}
+		if err := b.deleteClient(instanceID); err != nil {
 			return brokerapi.DeprovisionServiceSpec{}, err
 		}
 	case userAccountGUID:
@@ -205,12 +201,14 @@ func (b *DeployerAccountBroker) Bind(
 
 func (b *DeployerAccountBroker) Unbind(
 	context context.Context,
-	instanceID, bindingID string,
+	instanceID,
+	bindingID string,
 	details brokerapi.UnbindDetails,
 ) error {
 	switch details.ServiceID {
 	case clientAccountGUID:
-		if err := b.uaaClient.DeleteClient(bindingID); err != nil {
+		err := b.deleteClient(bindingID)
+		if err != nil {
 			return err
 		}
 	case userAccountGUID:
@@ -277,6 +275,19 @@ func (b *DeployerAccountBroker) provisionClient(
 	}
 
 	return b.uaaClient.CreateClient(client)
+}
+
+func (b *DeployerAccountBroker) deleteClient(
+	clientID string,
+) error {
+	err := b.uaaClient.DeleteClient(clientID)
+
+	// Allow 404 responses on deletion
+	if err != nil && strings.Contains(err.Error(), "404") {
+		return nil
+	}
+
+	return err
 }
 
 func (b *DeployerAccountBroker) provisionUser(userID, password string) (User, error) {

@@ -287,19 +287,49 @@ var _ = Describe("broker", func() {
 				Expect(err).NotTo(HaveOccurred())
 				uaaClient.AssertExpectations(GinkgoT())
 			})
-		})
 
-		Describe("deprovision", func() {
-			It("does not return an error", func() {
-				uaaClient.On("DeleteClient", "binding-guid").Return(nil)
+			It("does not return an error for a 404 response on deletion", func() {
+				uaaClient.On("DeleteClient", "binding-guid2").Return(fmt.Errorf("Expected status 200; got: %d", 404))
 
 				err := broker.Unbind(
 					context.Background(),
 					"instance-guid",
-					"binding-guid",
+					"binding-guid2",
 					brokerapi.UnbindDetails{
 						ServiceID: clientAccountGUID,
 					},
+				)
+				Expect(err).NotTo(HaveOccurred())
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+
+			It("does return an error for a response other than 200/404 on deletion", func() {
+				uaaClient.On("DeleteClient", "binding-guid3").Return(fmt.Errorf("Expected status 200; got: %d", 500))
+
+				err := broker.Unbind(
+					context.Background(),
+					"instance-guid",
+					"binding-guid3",
+					brokerapi.UnbindDetails{
+						ServiceID: clientAccountGUID,
+					},
+				)
+				Expect(err).To(HaveOccurred())
+				uaaClient.AssertExpectations(GinkgoT())
+			})
+		})
+
+		Describe("deprovision", func() {
+			It("does not return an error", func() {
+				uaaClient.On("DeleteClient", "instance-guid").Return(nil)
+
+				_, err := broker.Deprovision(
+					context.Background(),
+					"instance-guid",
+					brokerapi.DeprovisionDetails{
+						ServiceID: clientAccountGUID,
+					},
+					false,
 				)
 				Expect(err).NotTo(HaveOccurred())
 				uaaClient.AssertExpectations(GinkgoT())
