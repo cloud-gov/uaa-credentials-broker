@@ -5,4 +5,4 @@ applications:
   buildpacks:
   - https://github.com/cloudfoundry/go-buildpack
   env:
-    GOVERSION: go1.20
+    GOVERSION: go1.22
