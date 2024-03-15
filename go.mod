@@ -1,6 +1,6 @@
 module github.com/cloud-gov/uaa-credentials-broker
 
-go 1.21
+go 1.19
 
 require (
 	code.cloudfoundry.org/lager v0.0.0-20170612214856-dfcbcba2dd4a
