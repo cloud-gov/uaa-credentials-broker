@@ -58,7 +58,7 @@ jobs:
             BROKER_PASSWORD: ((broker-password-staging))
             EMAIL_ADDRESS: ((email-address-staging))
       - task: update-broker
-        file: pipeline-tasks/register-service-broker.yml
+        file: pipeline-tasks/register-service-broker-and-set-plan-visibility.yml
         params:
           CF_API_URL: ((cf-api-url-staging))
           CF_USERNAME: ((cf-deploy-username-staging))
@@ -138,7 +138,7 @@ jobs:
             BROKER_PASSWORD: ((broker-password-production))
             EMAIL_ADDRESS: ((email-address-production))
       - task: update-broker-identity-provider
-        file: pipeline-tasks/register-service-broker.yml
+        file: pipeline-tasks/register-service-broker-and-set-plan-visibility.yml
         params:
           CF_API_URL: ((cf-api-url-production))
           CF_USERNAME: ((cf-deploy-username-production))
@@ -150,7 +150,7 @@ jobs:
           AUTH_PASS: ((broker-password-production))
           SERVICES: cloud-gov-identity-provider
       - task: update-broker-service-account
-        file: pipeline-tasks/register-service-broker.yml
+        file: pipeline-tasks/register-service-broker-and-set-plan-visibility.yml
         params:
           CF_API_URL: ((cf-api-url-production))
           CF_USERNAME: ((cf-deploy-username-production))
@@ -161,7 +161,7 @@ jobs:
           AUTH_USER: ((broker-username-production))
           AUTH_PASS: ((broker-password-production))
           SERVICES: cloud-gov-service-account
-          SERVICE_ORGANIZATION_BLACKLIST: ((service-account-blacklist))
+          SERVICE_ORGANIZATION_DENYLIST: ((service-account-blacklist))
     on_failure:
       put: slack
       params:
