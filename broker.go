@@ -214,6 +214,9 @@ func (b *DeployerAccountBroker) Unbind(
 	case userAccountGUID:
 		user, err := b.uaaClient.GetUser(bindingID)
 		if err != nil {
+			if strings.Contains(err.Error(), "got 0") {
+				return nil
+			}
 			return err
 		}
 
