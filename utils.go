@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"net/http"
 )
 
 func encodeBody(obj interface{}) (io.Reader, error) {
@@ -15,7 +14,7 @@ func encodeBody(obj interface{}) (io.Reader, error) {
 	return buffer, nil
 }
 
-func decodeBody(resp *http.Response, out interface{}) error {
-	defer resp.Body.Close()
-	return json.NewDecoder(resp.Body).Decode(out)
+func decodeBody(body io.ReadCloser, out interface{}) error {
+	defer body.Close()
+	return json.NewDecoder(body).Decode(out)
 }

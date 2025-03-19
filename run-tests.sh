@@ -8,6 +8,6 @@ pushd uaa-credentials-broker
 
 go get -v -d ./...
 
-ginkgo -r .
+go test -v ./...
 
 popd
