@@ -72,13 +72,14 @@ func (c *UAAClient) CreateClient(client Client) (Client, error) {
 		return Client{}, err
 	}
 
-	err = decodeBody(resp, &client)
+	output := map[string]any{}
+	err = decodeBody(resp.Body, &output)
 	if err != nil {
 		return Client{}, err
 	}
 
 	if resp.StatusCode != 201 {
-		return Client{}, fmt.Errorf("expected status 201; got: %d. error: %s", resp.StatusCode, err)
+		return Client{}, fmt.Errorf("expected status 201; got: %d. error: %s", resp.StatusCode, output)
 	}
 
 	return client, nil
@@ -121,7 +122,7 @@ func (c *UAAClient) GetUser(userID string) (User, error) {
 	}
 
 	users := Users{}
-	err = decodeBody(resp, &users)
+	err = decodeBody(resp.Body, &users)
 	if err != nil {
 		return User{}, err
 	}
@@ -150,7 +151,7 @@ func (c *UAAClient) CreateUser(user User) (User, error) {
 		return User{}, fmt.Errorf("Expected status 201; got: %d", resp.StatusCode)
 	}
 
-	err = decodeBody(resp, &user)
+	err = decodeBody(resp.Body, &user)
 	if err != nil {
 		return User{}, err
 	}
