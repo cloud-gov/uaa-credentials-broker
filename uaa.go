@@ -60,7 +60,7 @@ type UAAClient struct {
 }
 
 func (c *UAAClient) CreateClient(client Client) (Client, error) {
-	c.logger.Info("uaa-create-client", lager.Data{"clientID": client.Name})
+	c.logger.Info("uaa-create-client", lager.Data{"clientID": client.ID})
 
 	body, _ := encodeBody(client)
 	req, _ := http.NewRequest("POST", fmt.Sprintf("%s/oauth/clients", c.endpoint), body)
@@ -72,13 +72,13 @@ func (c *UAAClient) CreateClient(client Client) (Client, error) {
 		return Client{}, err
 	}
 
-	if resp.StatusCode != 201 {
-		return Client{}, fmt.Errorf("Expected status 201; got: %d", resp.StatusCode)
-	}
-
 	err = decodeBody(resp, &client)
 	if err != nil {
 		return Client{}, err
+	}
+
+	if resp.StatusCode != 201 {
+		return Client{}, fmt.Errorf("expected status 201; got: %d. error: %s", resp.StatusCode, err)
 	}
 
 	return client, nil
