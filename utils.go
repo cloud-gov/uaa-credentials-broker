@@ -14,7 +14,7 @@ func encodeBody(obj interface{}) (io.Reader, error) {
 	return buffer, nil
 }
 
-func decodeBody(bodyStream io.ReadCloser, out interface{}) error {
-	defer bodyStream.Close()
-	return json.NewDecoder(bodyStream).Decode(out)
+func decodeBody(body io.ReadCloser, out interface{}) error {
+	defer body.Close()
+	return json.NewDecoder(body).Decode(out)
 }

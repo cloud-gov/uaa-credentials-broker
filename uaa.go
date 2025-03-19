@@ -72,14 +72,18 @@ func (c *UAAClient) CreateClient(client Client) (Client, error) {
 		return Client{}, err
 	}
 
-	output := map[string]any{}
-	err = decodeBody(resp.Body, &output)
-	if err != nil {
-		return Client{}, err
+	if resp.StatusCode != 201 {
+		output := map[string]any{}
+		err = decodeBody(resp.Body, &output)
+		if err != nil {
+			return Client{}, err
+		}
+		return Client{}, fmt.Errorf("expected status 201; got: %d. error: %s", resp.StatusCode, output)
 	}
 
-	if resp.StatusCode != 201 {
-		return Client{}, fmt.Errorf("expected status 201; got: %d. error: %s", resp.StatusCode, output)
+	err = decodeBody(resp.Body, &client)
+	if err != nil {
+		return Client{}, err
 	}
 
 	return client, nil
