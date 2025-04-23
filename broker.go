@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pivotal-cf/brokerapi"
 
 	"io/ioutil"
@@ -154,7 +153,7 @@ func (b *DeployerAccountBroker) Bind(
 			return brokerapi.Binding{}, err
 		}
 
-		space, err := b.cfClient.GetSpaceByGuid(instance.SpaceGuid)
+		space, err := b.cfClient.GetSpaceByGuid(instance.Relationships.Space.Data.GUID)
 		if err != nil {
 			return brokerapi.Binding{}, err
 		}
@@ -163,24 +162,24 @@ func (b *DeployerAccountBroker) Bind(
 		if err != nil {
 			return brokerapi.Binding{}, err
 		}
-		_, err = b.cfClient.CreateUser(cfclient.UserRequest{Guid: user.ID})
+		_, err = b.cfClient.CreateUser(user.ID)
 		if err != nil {
 			return brokerapi.Binding{}, err
 		}
 
-		_, err = b.cfClient.AssociateOrgUserByUsername(space.OrganizationGuid, user.UserName)
+		_, err = b.cfClient.AssociateOrgUserByUsername(space.Relationships.Organization.Data.GUID, user.UserName)
 		if err != nil {
 			return brokerapi.Binding{}, err
 		}
 
 		switch details.PlanID {
 		case deployerGUID:
-			_, err = b.cfClient.AssociateSpaceDeveloperByUsername(instance.SpaceGuid, user.UserName)
+			_, err = b.cfClient.AssociateSpaceDeveloperByUsername(instance.Relationships.Space.Data.GUID, user.UserName)
 			if err != nil {
 				return brokerapi.Binding{}, err
 			}
 		case auditorGUID:
-			_, err = b.cfClient.AssociateSpaceAuditorByUsername(instance.SpaceGuid, user.UserName)
+			_, err = b.cfClient.AssociateSpaceAuditorByUsername(instance.Relationships.Space.Data.GUID, user.UserName)
 			if err != nil {
 				return brokerapi.Binding{}, err
 			}
