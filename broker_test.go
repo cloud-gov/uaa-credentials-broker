@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"code.cloudfoundry.org/lager/lagertest"
-	"github.com/cloudfoundry-community/go-cfclient"
+	cf "github.com/cloudfoundry/go-cfclient/v3/resource"
 	"github.com/pivotal-cf/brokerapi"
 
 	. "github.com/onsi/ginkgo"
@@ -369,9 +369,29 @@ var _ = Describe("broker", func() {
 
 	Describe("uaa user", func() {
 		Describe("provision", func() {
+			svcInst := &cf.ServiceInstance{
+				Relationships: cf.ServiceInstanceRelationships{
+					Space: &cf.ToOneRelationship{
+						Data: &cf.Relationship{
+							GUID: "space-guid",
+						},
+					},
+				},
+			}
+			space := &cf.Space{
+				Relationships: &cf.SpaceRelationships{
+					Organization: &cf.ToOneRelationship{
+						Data: &cf.Relationship{
+							GUID: "org-guid",
+						},
+					},
+				},
+			}
+			user := &cf.User{}
+			user.GUID = "user-guid"
 			It("returns a provision service spec for space-deployer", func() {
-				cfClient.On("ServiceInstanceByGuid", "instance-guid").Return(cfclient.ServiceInstance{SpaceGuid: "space-guid"}, nil)
-				cfClient.On("GetSpaceByGuid", "space-guid").Return(cfclient.Space{OrganizationGuid: "org-guid"}, nil)
+				cfClient.On("ServiceInstanceByGuid", "instance-guid").Return(svcInst, nil)
+				cfClient.On("GetSpaceByGuid", "space-guid").Return(space, nil)
 				uaaClient.On("CreateUser", User{
 					UserName: "binding-guid",
 					Password: "password",
@@ -380,9 +400,9 @@ var _ = Describe("broker", func() {
 						Primary: true,
 					}},
 				}).Return(User{ID: "user-guid"}, nil)
-				cfClient.On("CreateUser", cfclient.UserRequest{Guid: "user-guid"}).Return(cfclient.User{Guid: "user-guid"}, nil)
-				cfClient.On("AssociateOrgUserByUsername", "org-guid", "binding-guid").Return(cfclient.Org{}, nil)
-				cfClient.On("AssociateSpaceDeveloperByUsername", "space-guid", "binding-guid").Return(cfclient.Space{}, nil)
+				cfClient.On("CreateUser", "user-guid").Return(user, nil)
+				cfClient.On("AssociateOrgUserByUsername", "org-guid", "binding-guid").Return(&cf.Role{}, nil)
+				cfClient.On("AssociateSpaceDeveloperByUsername", "space-guid", "binding-guid").Return(&cf.Role{}, nil)
 
 				_, err := broker.Bind(
 					context.Background(),
@@ -400,8 +420,8 @@ var _ = Describe("broker", func() {
 			})
 
 			It("returns a provision service spec for space-auditor", func() {
-				cfClient.On("ServiceInstanceByGuid", "instance-guid").Return(cfclient.ServiceInstance{SpaceGuid: "space-guid"}, nil)
-				cfClient.On("GetSpaceByGuid", "space-guid").Return(cfclient.Space{OrganizationGuid: "org-guid"}, nil)
+				cfClient.On("ServiceInstanceByGuid", "instance-guid").Return(svcInst, nil)
+				cfClient.On("GetSpaceByGuid", "space-guid").Return(space, nil)
 				uaaClient.On("CreateUser", User{
 					UserName: "binding-guid",
 					Password: "password",
@@ -410,9 +430,9 @@ var _ = Describe("broker", func() {
 						Primary: true,
 					}},
 				}).Return(User{ID: "user-guid"}, nil)
-				cfClient.On("CreateUser", cfclient.UserRequest{Guid: "user-guid"}).Return(cfclient.User{Guid: "user-guid"}, nil)
-				cfClient.On("AssociateOrgUserByUsername", "org-guid", "binding-guid").Return(cfclient.Org{}, nil)
-				cfClient.On("AssociateSpaceAuditorByUsername", "space-guid", "binding-guid").Return(cfclient.Space{}, nil)
+				cfClient.On("CreateUser", "user-guid").Return(user, nil)
+				cfClient.On("AssociateOrgUserByUsername", "org-guid", "binding-guid").Return(&cf.Role{}, nil)
+				cfClient.On("AssociateSpaceAuditorByUsername", "space-guid", "binding-guid").Return(&cf.Role{}, nil)
 
 				_, err := broker.Bind(
 					context.Background(),

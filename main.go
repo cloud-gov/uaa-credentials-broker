@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/cloudfoundry-community/go-cfclient"
 	"log"
 	"net/http"
 	"os"
+
+	cfclient "github.com/cloudfoundry/go-cfclient/v3/client"
+	cfconfig "github.com/cloudfoundry/go-cfclient/v3/config"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/kelseyhightower/envconfig"
@@ -53,13 +55,13 @@ func main() {
 
 	client := NewClient(config)
 
-	cfClient, err := cfclient.NewClient(&cfclient.Config{
-		ApiAddress:   config.CFAddress,
-		ClientID:     config.UAAClientID,
-		ClientSecret: config.UAAClientSecret,
-	})
+	cfConfig, _ := cfconfig.New(config.CFAddress, cfconfig.ClientCredentials(config.UAAClientID, config.UAAClientSecret))
+	cfClient, err := cfclient.New(cfConfig)
 	if err != nil {
 		log.Fatalf("%s", err)
+	}
+	paasClient := &CFClient{
+		Client: cfClient,
 	}
 
 	broker := DeployerAccountBroker{
@@ -70,7 +72,7 @@ func main() {
 			zone:     config.UAAZone,
 			client:   client,
 		},
-		cfClient:         cfClient,
+		cfClient:         paasClient,
 		generatePassword: GenerateSecurePassword,
 		config:           config,
 	}
