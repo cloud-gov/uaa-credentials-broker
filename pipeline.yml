@@ -108,12 +108,7 @@ jobs:
           UAA_API_URL: ((uaa-address-staging))
           UAA_CLIENT_ID: ((uaa-client-id-test-staging))
           UAA_CLIENT_SECRET: ((uaa-client-secret-test-staging))
-          CLIENT_SERVICE_NAME: cloud-gov-identity-provider
-          USER_SERVICE_NAME: cloud-gov-service-account
-          CLIENT_PLAN_NAME: oauth-client
-          USER_PLAN_NAME: space-deployer
-          SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
-
+         
   - name: push-broker-production
     serial_groups: [production]
     serial: true
@@ -201,11 +196,6 @@ jobs:
           UAA_API_URL: ((uaa-address-production))
           UAA_CLIENT_ID: ((uaa-client-id-test-production))
           UAA_CLIENT_SECRET: ((uaa-client-secret-test-production))
-          CLIENT_SERVICE_NAME: cloud-gov-identity-provider
-          USER_SERVICE_NAME: cloud-gov-service-account
-          CLIENT_PLAN_NAME: oauth-client
-          USER_PLAN_NAME: space-deployer
-          SERVICE_INSTANCE_NAME: uaa-credentials-acceptance
 
 resources:
   - name: broker-src
