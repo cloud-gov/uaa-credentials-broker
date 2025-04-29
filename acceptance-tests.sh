@@ -27,7 +27,7 @@ function test_cloud-gov-service-account-plan () {
   local svc_key_guid=$(cf service-key "$svc_instance_name" "$svc_key_name" --guid)
   local username=$(cf curl "/v3/service_credential_bindings/${svc_key_guid}/details" | jq -r '.credentials.username')
   if [ "$svc_key_guid" != "$username" ]; then
-    echo "FAIL: Username ${username} does not macth service key guid ${svc_key_guid}." >> $results_file
+    echo "FAIL: Username ${username} does not match service key guid ${svc_key_guid}." >> $results_file
     fail_count=$((fail_count+1))
   else 
     echo "PASSED: Username ${username} matches service key guid." >> $results_file
