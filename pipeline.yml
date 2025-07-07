@@ -78,15 +78,6 @@ jobs:
         channel: ((slack-failure-channel))
         username: ((slack-username))
         icon_url: ((slack-icon-url))
-    on_success:
-      put: slack
-      params:
-        text: |
-          :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-staging))
-          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-        channel: ((slack-success-channel))
-        username: ((slack-username))
-        icon_url: ((slack-icon-url))
 
   - name: acceptance-tests-staging
     serial_groups: [staging]
@@ -108,7 +99,7 @@ jobs:
           UAA_API_URL: ((uaa-address-staging))
           UAA_CLIENT_ID: ((uaa-client-id-test-staging))
           UAA_CLIENT_SECRET: ((uaa-client-secret-test-staging))
-         
+
   - name: push-broker-production
     serial_groups: [production]
     serial: true
@@ -164,15 +155,6 @@ jobs:
           :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-production))
           <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
         channel: ((slack-failure-channel))
-        username: ((slack-username))
-        icon_url: ((slack-icon-url))
-    on_success:
-      put: slack
-      params:
-        text: |
-          :white_check_mark: Successfully deployed uaa-credentials-broker on ((cf-api-url-production))
-          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-        channel: ((slack-success-channel))
         username: ((slack-username))
         icon_url: ((slack-icon-url))
 
