@@ -32,8 +32,52 @@ jobs:
     plan:
       - get: broker-src
         trigger: true
-      - set_pipeline: deploy-uaa-credentials-broker
+      - set_pipeline: self
         file: broker-src/pipeline.yml
+
+  - name: push-broker-development
+    serial_groups: [development]
+    serial: true
+    plan:
+      - in_parallel:
+          - get: broker-src
+            trigger: true
+            passed: [reconfigure]
+          - get: pipeline-tasks
+      - put: broker-deploy-development
+        params:
+          path: broker-src
+          manifest: broker-src/manifest.yml
+          environment_variables:
+            UAA_ADDRESS: ((uaa-address-development))
+            UAA_CLIENT_ID: ((uaa-client-id-development))
+            UAA_CLIENT_SECRET: ((uaa-client-secret-development))
+            UAA_ZONE: ((uaa-zone-development))
+            CF_ADDRESS: ((cf-api-url-development))
+            BROKER_USERNAME: ((broker-username-development))
+            BROKER_PASSWORD: ((broker-password-development))
+            EMAIL_ADDRESS: ((email-address-development))
+      - task: update-broker
+        file: pipeline-tasks/register-service-broker-and-set-plan-visibility.yml
+        params:
+          CF_API_URL: ((dev-cf-api-url))
+          CF_USERNAME: ((cf-deploy-username-development))
+          CF_PASSWORD: ((cf-deploy-password-development))
+          CF_ORGANIZATION: ((cf-organization-development))
+          CF_SPACE: ((cf-space-development))
+          BROKER_NAME: uaa-credentials-broker
+          AUTH_USER: ((broker-username-development))
+          AUTH_PASS: ((broker-password-development))
+          SERVICES: cloud-gov-service-account cloud-gov-identity-provider
+    on_failure:
+      put: slack
+      params: &slack-failure-params
+        text: |
+          :x: FAILED to deploy uaa-credentials-broker on ((dev-cf-api-url))
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+        channel: ((slack-failure-channel))
+        username: ((slack-username))
+        icon_url: ((slack-icon-url))
 
   - name: push-broker-staging
     serial_groups: [staging]
@@ -60,7 +104,7 @@ jobs:
       - task: update-broker
         file: pipeline-tasks/register-service-broker-and-set-plan-visibility.yml
         params:
-          CF_API_URL: ((cf-api-url-staging))
+          CF_API_URL: ((staging-cf-api-url))
           CF_USERNAME: ((cf-deploy-username-staging))
           CF_PASSWORD: ((cf-deploy-password-staging))
           CF_ORGANIZATION: ((cf-organization-staging))
@@ -72,12 +116,10 @@ jobs:
     on_failure:
       put: slack
       params:
+        <<: *slack-failure-params
         text: |
-          :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-staging))
+          :x: FAILED to deploy uaa-credentials-broker on ((staging-cf-api-url))
           <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-        channel: ((slack-failure-channel))
-        username: ((slack-username))
-        icon_url: ((slack-icon-url))
 
   - name: acceptance-tests-staging
     serial_groups: [staging]
@@ -99,6 +141,13 @@ jobs:
           UAA_API_URL: ((uaa-address-staging))
           UAA_CLIENT_ID: ((uaa-client-id-test-staging))
           UAA_CLIENT_SECRET: ((uaa-client-secret-test-staging))
+    on_failure:
+      put: slack
+      params:
+        <<: *slack-failure-params
+        text: |
+          :x: uaa-credentials-broker acceptance tests FAILED in staging
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
 
   - name: push-broker-production
     serial_groups: [production]
@@ -126,7 +175,7 @@ jobs:
       - task: update-broker-identity-provider
         file: pipeline-tasks/register-service-broker-and-set-plan-visibility.yml
         params:
-          CF_API_URL: ((cf-api-url-production))
+          CF_API_URL: ((prod-cf-api-url))
           CF_USERNAME: ((cf-deploy-username-production))
           CF_PASSWORD: ((cf-deploy-password-production))
           CF_ORGANIZATION: ((cf-organization-production))
@@ -151,12 +200,7 @@ jobs:
     on_failure:
       put: slack
       params:
-        text: |
-          :x: FAILED to deploy uaa-credentials-broker on ((cf-api-url-production))
-          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-        channel: ((slack-failure-channel))
-        username: ((slack-username))
-        icon_url: ((slack-icon-url))
+        <<: *slack-failure-params
 
   - name: acceptance-tests-production
     serial_groups: [production]
@@ -178,6 +222,13 @@ jobs:
           UAA_API_URL: ((uaa-address-production))
           UAA_CLIENT_ID: ((uaa-client-id-test-production))
           UAA_CLIENT_SECRET: ((uaa-client-secret-test-production))
+    on_failure:
+      put: slack
+      params:
+        <<: *slack-failure-params
+        text: |
+          :x: uaa-credentials-broker acceptance tests FAILED in production
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
 
 resources:
   - name: broker-src
@@ -193,10 +244,19 @@ resources:
       branch: main
       commit_verification_keys: ((cloud-gov-pgp-keys))
 
+  - name: broker-deploy-development
+    type: cf
+    source:
+      api: ((dev-cf-api-url))
+      username: ((cf-deploy-username-development))
+      password: ((cf-deploy-password-development))
+      organization: ((cf-organization-development))
+      space: ((cf-space-development))
+
   - name: broker-deploy-staging
     type: cf
     source:
-      api: ((cf-api-url-staging))
+      api: ((staging-cf-api-url))
       username: ((cf-deploy-username-staging))
       password: ((cf-deploy-password-staging))
       organization: ((cf-organization-staging))
@@ -205,7 +265,7 @@ resources:
   - name: broker-deploy-production
     type: cf
     source:
-      api: ((cf-api-url-production))
+      api: ((prod-cf-api-url))
       username: ((cf-deploy-username-production))
       password: ((cf-deploy-password-production))
       organization: ((cf-organization-production))
