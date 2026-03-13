@@ -53,7 +53,7 @@ jobs:
             UAA_CLIENT_ID: ((uaa-client-id-development))
             UAA_CLIENT_SECRET: ((uaa-client-secret-development))
             UAA_ZONE: ((uaa-zone-development))
-            CF_ADDRESS: ((cf-api-url-development))
+            CF_ADDRESS: ((dev-cf-api-url))
             BROKER_USERNAME: ((broker-username-development))
             BROKER_PASSWORD: ((broker-password-development))
             EMAIL_ADDRESS: ((email-address-development))
@@ -79,6 +79,34 @@ jobs:
         username: ((slack-username))
         icon_url: ((slack-icon-url))
 
+  - name: acceptance-tests-development
+    serial_groups: [development]
+    serial: true
+    plan:
+      - get: broker-src
+        passed: [push-broker-development]
+        trigger: true
+      - get: general-task
+      - task: acceptance-tests-development
+        image: general-task
+        file: broker-src/acceptance-tests.yml
+        params:
+          CF_API_URL: ((dev-cf-api-url))
+          CF_USERNAME: ((cf-deploy-username-development))
+          CF_PASSWORD: ((cf-deploy-password-development))
+          CF_ORGANIZATION: ((cf-organization-development))
+          CF_SPACE: ((cf-space-development))
+          UAA_API_URL: ((uaa-address-development))
+          UAA_CLIENT_ID: ((uaa-client-id-development))
+          UAA_CLIENT_SECRET: ((uaa-client-secret-development))
+    on_failure:
+      put: slack
+      params:
+        <<: *slack-failure-params
+        text: |
+          :x: uaa-credentials-broker acceptance tests FAILED in development
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+
   - name: push-broker-staging
     serial_groups: [staging]
     serial: true
@@ -86,7 +114,7 @@ jobs:
       - in_parallel:
           - get: broker-src
             trigger: true
-            passed: [reconfigure]
+            passed: [acceptance-tests-development]
           - get: pipeline-tasks
       - put: broker-deploy-staging
         params:
