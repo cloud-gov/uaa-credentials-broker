@@ -1,8 +1,6 @@
 module github.com/cloud-gov/uaa-credentials-broker
 
-go 1.23.0
-
-toolchain go1.23.4
+go 1.25.0
 
 require (
 	code.cloudfoundry.org/lager v0.0.0-20170612214856-dfcbcba2dd4a
@@ -30,9 +28,9 @@ require (
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
